@@ -18,41 +18,6 @@ router = APIRouter(
 )
 
 
-@router.get("/users/me")
-async def get_self(
-    db: Database = Depends(db.use),
-    me: str = Depends(authorize),
-) -> UserView:
-    """
-    This function returns the currently authenticated user.
-    """
-    raise HTTPException(status_code=501, detail="Not implemented")
-
-
-class UserModel(BaseModel):
-    color: str
-    pronouns: list[str]
-
-
-@router.patch("/users/update")
-async def update_user(
-    user: UserModel = Depends(authorize),
-    db: Database = Depends(db.use),
-) -> User:
-    """
-    Updates the specified authenticated user
-    """
-    # TODO: Fetch the user and do overrides
-    user_data = User(color=user.color, pronouns=user.pronouns) # type: ignore
-    db.add(user_data)
-    await db.commit()
-    return user_data
-
-
-# @router.delete("/users/delete")
-# async def delete_user()
-
-
 class LoginRequest(BaseModel):
     email: str
     password: str
@@ -120,6 +85,37 @@ async def register(
     return new_session(db, user.id)
 
 
+@router.get("/users/me")
+async def get_self(
+    db: Database = Depends(db.use),
+    me_id: int = Depends(authorize),
+) -> UserView:
+    """
+    This function returns the currently authenticated user.
+    """
+    raise HTTPException(status_code=501, detail="Not implemented")
+
+
+@router.patch("/users/me")
+async def update_user(
+    req: RegisterRequest,
+    me_id: int = Depends(authorize),
+    db: Database = Depends(db.use),
+) -> User:
+    """
+    Updates the specified authenticated user
+    """
+    user = User(id=me_id, **req.model_dump())
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+# @router.delete("/users/delete")
+# async def delete_user()
+
+
 @router.get("/groups/{group_id}")
 async def get_group(
     group_id: int,
@@ -129,7 +125,7 @@ async def get_group(
     """
     This function returns a group by ID.
     """
-    
+
     # TODO: implement permission checking
     query = select(Group).where(Group.id == group_id)
     group = (await db.exec(query)).one()
@@ -141,7 +137,7 @@ class GroupRequest(BaseModel):
     bio: str
 
 
-@router.post("/groups/create")
+@router.post("/groups")
 async def create_group(req: GroupRequest, db: Database = Depends(db.use)) -> Group:
     """
     Creates a group, which represents a group of users
@@ -154,7 +150,7 @@ async def create_group(req: GroupRequest, db: Database = Depends(db.use)) -> Gro
     return group
 
 
-@router.delete("/groups/delete/{group_id}")
+@router.delete("/groups/{group_id}")
 async def delete_group(group_id: int, db: Database = Depends(db.use)) -> Group:
     """
     Deletes a group from the database using the specified ID
@@ -167,7 +163,7 @@ async def delete_group(group_id: int, db: Database = Depends(db.use)) -> Group:
     return group
 
 
-@router.patch("/groups/update/{group_id}")
+@router.patch("/groups/{group_id}")
 async def update_group(
     group_id: int,
     req: GroupRequest,
@@ -186,9 +182,11 @@ async def update_group(
     await db.refresh(res)
     return res
 
+
 class HouseRequest(BaseModel):
     lat: float
     lon: float
+
 
 @router.get("/houses/{house_id}")
 async def get_house(
@@ -203,23 +201,27 @@ async def get_house(
     query = select(House).where(House.id == house_id)
     house = (await db.exec(query)).one()
     return house
-    
-    
+
     # raise HTTPException(status_code=501, detail="Not implemented")
 
-@router.post("/houses/create")
+
+@router.post("/houses")
 async def create_house(req: HouseRequest, db: Database = Depends(db.use)) -> House:
     """
     Creates a new house
     """
+    # TODO: assert that you don't already have a house
     house = House(**req.model_dump())
     db.add(house)
     await db.commit()
     await db.refresh(house)
     return house
 
-@router.patch("/houses/update/{house_id}")
-async def update_house(house_id: int, req: HouseRequest, db: Database = Depends(db.use)) -> House:
+
+@router.patch("/houses/{house_id}")
+async def update_house(
+    house_id: int, req: HouseRequest, db: Database = Depends(db.use)
+) -> House:
     """
     Updates the information of a current house
     """
@@ -232,7 +234,8 @@ async def update_house(house_id: int, req: HouseRequest, db: Database = Depends(
     await db.refresh(house)
     return house
 
-@router.delete("/houses/delete/{house_id}")
+
+@router.delete("/houses/{house_id}")
 async def delete_house(house_id: int, db: Database = Depends(db.use)) -> House:
     """
     Deletes a house from the database
@@ -242,6 +245,7 @@ async def delete_house(house_id: int, db: Database = Depends(db.use)) -> House:
     await db.delete(house)
     await db.commit()
     return house
+
 
 @router.get(
     "/assets/{asset_hash}",
