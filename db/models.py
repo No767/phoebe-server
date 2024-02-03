@@ -24,6 +24,7 @@ class AccessLevel(int, Enum):
     LEVEL1 = 1
     LEVEL2 = 2
     LEVEL3 = 3
+    HIGHEST = LEVEL3
 
 
 class Session(SQLModel, table=True):

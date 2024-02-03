@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlmodel import select
+from viewlevels.group import assert_group_level, assert_owns_group
 from db import Database
 from db.models import *
 from sessions import authorize
@@ -36,6 +37,7 @@ async def get_group(
     if group is None:
         raise HTTPException(status_code=404, detail="Group not found")
 
+    await assert_group_level(db, me_id, group.id, AccessLevel.LEVEL1)
     return await group_response(db, me_id, group)
 
 
@@ -77,13 +79,18 @@ async def create_group(
 
 
 @router.delete("/groups/{group_id}")
-async def delete_group(group_id: int, db: Database = Depends(db.use)) -> Group:
+async def delete_group(
+    group_id: int,
+    db: Database = Depends(db.use),
+    me_id: int = Depends(authorize),
+) -> Group:
     """
     Deletes a group from the database using the specified ID
     """
     # TODO: Make sure that the user has proper permissions to delete stuff
     query = select(Group).where(Group.id == group_id)
     group = (await db.exec(query)).one()
+    await assert_owns_group(db, me_id, group.id)
     await db.delete(group)
     await db.commit()
     return group
@@ -94,16 +101,18 @@ async def update_group(
     group_id: int,
     req: CreateGroupRequest,
     db: Database = Depends(db.use),
-    # me: str = Depends(authorize),
+    me_id: int = Depends(authorize),
 ) -> Group:
     """
     Updates a group using the specified ID
     """
     query = select(Group).where(Group.id == group_id)
-    res = (await db.exec(query)).one()
+    group = (await db.exec(query)).one()
+    await assert_owns_group(db, me_id, group.id)
+
     for k, v in req.model_dump().items():
-        setattr(res, k, v)
-    db.add(res)
+        setattr(group, k, v)
+    db.add(group)
     await db.commit()
-    await db.refresh(res)
-    return res
+    await db.refresh(group)
+    return group

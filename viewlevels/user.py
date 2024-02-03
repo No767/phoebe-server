@@ -1,5 +1,6 @@
 from db import Database
 from db.models import *
+from viewlevels.group import group_level
 from pydantic import BaseModel, Field
 from sqlmodel import select
 from typing import Annotated, Union, Literal
@@ -69,15 +70,8 @@ async def user_view_from_db(db: Database, me_id: int, user: User) -> "UserView":
     This function returns a UserView object, which is a view of a user's profile
     that is tailored to the current user's access level.
     """
-    relationship = (
-        await db.exec(
-            select(GroupRelationship).where(
-                GroupRelationship.user_id == me_id
-                and GroupRelationship.group_id == user.group_id
-            )
-        )
-    ).first()
-    return user_view(user, relationship.level if relationship else AccessLevel.PUBLIC)
+    level = await group_level(db, me_id, user.group_id)
+    return user_view(user, level)
 
 
 if __name__ == "__main__":
