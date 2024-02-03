@@ -6,6 +6,7 @@ import db
 import api
 import uvicorn
 import argparse
+from fastapi_pagination import add_pagination
 
 
 @asynccontextmanager
@@ -16,6 +17,7 @@ async def with_init_db(_: FastAPI):
 
 app = FastAPI(lifespan=with_init_db)
 app.include_router(api.router)
+add_pagination(app)
 
 
 if __name__ == "__main__":
