@@ -2,10 +2,9 @@ from sqlmodel import Relationship, SQLModel, Field
 from datetime import datetime
 
 
-class User(SQLModel, table=True):
-    username: str = Field(primary_key=True)
+class UserPassword(SQLModel, table=True):
+    id: Optional[int] = Field(foreign_key="public_user.id")
     passhash: str
-    display_name: str | None = None
 
 
 class Session(SQLModel, table=True):
