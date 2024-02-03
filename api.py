@@ -89,11 +89,11 @@ async def register(
 async def get_self(
     db: Database = Depends(db.use),
     me_id: int = Depends(authorize),
-) -> UserView:
+) -> User:
     """
     This function returns the currently authenticated user.
     """
-    raise HTTPException(status_code=501, detail="Not implemented")
+    return (await db.exec(select(User).where(User.id == me_id))).one()
 
 
 @router.patch("/users/me")
@@ -105,10 +105,23 @@ async def update_user(
     """
     Updates the specified authenticated user
     """
-    user = User(id=me_id, **req.model_dump())
+    user = (await db.exec(select(User).where(User.id == me_id))).one()
+    password = (
+        await db.exec(select(UserPassword).where(UserPassword.id == me_id))
+    ).one()
+
+    for key, value in req.model_dump().items():
+        if key == "password":
+            password.passhash = hash_password(value)
+        else:
+            setattr(user, key, value)
+
     db.add(user)
+    db.add(password)
+
     await db.commit()
     await db.refresh(user)
+
     return user
 
 
