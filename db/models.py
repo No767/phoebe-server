@@ -109,6 +109,7 @@ class Asset(SQLModel, table=True):
 
     hash: str = Field(primary_key=True)
     data: bytes
+    created_at: datetime = Field(default_factory=datetime.utcnow)
     content_type: str
 
 

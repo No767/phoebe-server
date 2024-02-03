@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter, HTTPException
+from fastapi import Depends, APIRouter, HTTPException, Response, UploadFile
 from sqlmodel import select
 from pydantic import BaseModel
 from sessions import authorize, hash_password, verify_password, new_session
@@ -6,6 +6,8 @@ from view_levels import *
 from db.models import *
 from db import Database
 import db
+import base64
+import hashlib
 
 router = APIRouter(
     prefix="/api",
@@ -99,6 +101,55 @@ async def get_house(
     """
     # TODO: implement permission checking
     raise HTTPException(status_code=501, detail="Not implemented")
+
+
+@router.get("/assets/{asset_hash}")
+async def get_asset(
+    asset_hash: str,
+    response: Response,
+    db: Database = Depends(db.use),
+) -> bytes:
+    """
+    This function returns an asset by hash.
+    """
+
+    asset = (await db.exec(select(Asset).where(Asset.hash == asset_hash))).first()
+    if asset is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    response.headers["Content-Type"] = asset.content_type
+    return asset.data
+
+
+class UploadFileResponse(BaseModel):
+    hash: str
+    content_type: str
+
+
+@router.post("/assets")
+async def upload_asset(
+    file: UploadFile,
+    db: Database = Depends(db.use),
+) -> UploadFileResponse:
+    """
+    Uploads an asset and returns its hash.
+    """
+    UPLOAD_LIMIT = 1024 * 1024 * 5  # 5 MB
+
+    if file.content_type is None:
+        raise HTTPException(status_code=400, detail="Content-Type header is required")
+
+    if file.size is None or file.size > UPLOAD_LIMIT:
+        raise HTTPException(status_code=400, detail="File is too large")
+
+    data = await file.read()
+    hash = base64.b64encode(hashlib.sha256(data).digest()).decode("utf-8")
+    content_type = file.content_type
+
+    asset = Asset(hash=hash, data=data, content_type=content_type)
+    db.add(asset)
+
+    return UploadFileResponse(**asset.model_dump())
 
 
 @router.get("/chat/groups")
