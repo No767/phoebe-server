@@ -50,14 +50,14 @@ async def authorize(
     yield session.username
 
 
-def new_session(db: Database, username: str) -> Session:
+def new_session(db: Database, user_id: int) -> Session:
     """
     This function creates a new session for a user and adds it to the database.
     The session is returned.
     """
     session = Session(
         token=generate_token(),
-        username=username,
+        user_id=user_id,
         expires_at=datetime.now() + SESSION_EXPIRY,
     )
     db.add(session)
