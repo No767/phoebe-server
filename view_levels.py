@@ -23,16 +23,16 @@ class Level3User(Level2User):
 
 class UserView(BaseModel):
     class PublicUser(PublicUser):
-        level: Literal[0]
+        level: Literal[AccessLevel.PUBLIC]
 
     class Level1User(Level1User):
-        level: Literal[1]
+        level: Literal[AccessLevel.LEVEL1]
 
     class Level2User(Level2User):
-        level: Literal[2]
+        level: Literal[AccessLevel.LEVEL2]
 
     class Level3User(Level3User):
-        level: Literal[3]
+        level: Literal[AccessLevel.LEVEL3]
 
     user: Union[PublicUser, Level1User, Level2User, Level3User] = Field(
         discriminator="level",
