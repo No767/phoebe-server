@@ -2,6 +2,7 @@ from fastapi import Depends, APIRouter, HTTPException
 from sqlmodel import select
 from pydantic import BaseModel
 from sessions import authorize, hash_password, verify_password, new_session
+from user_views import *
 from db.models import *
 from db import Database
 import db
@@ -12,21 +13,15 @@ router = APIRouter(
 )
 
 
-class UserResponse(BaseModel):
-    username: str
-    display_name: str | None
-
-
 @router.get("/users/me")
 async def get_self(
-    username: str = Depends(authorize),
     db: Database = Depends(db.use),
-) -> UserResponse:
+    me: str = Depends(authorize),
+) -> UserView:
     """
     This function returns the currently authenticated user.
     """
-    user = (await db.exec(select(User).where(User.username == username))).one()
-    return UserResponse(**user.model_dump())
+    raise HTTPException(status_code=501, detail="Not implemented")
 
 
 class LoginRequest(BaseModel):
