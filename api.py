@@ -42,7 +42,8 @@ async def update_user(
     """
     Updates the specified authenticated user
     """
-    user_data = User(**user)
+    # TODO: Fetch the user and do overrides
+    user_data = User(color=user.color, pronouns=user.pronouns) # type: ignore
     db.add(user_data)
     await db.commit()
     return user_data
@@ -157,19 +158,53 @@ async def update_group(
     await db.refresh(res)
     return res
 
+class HouseRequest(BaseModel):
+    lat: float
+    lon: float
 
 @router.get("/houses/{house_id}")
 async def get_house(
     house_id: int,
     db: Database = Depends(db.use),
-    me: str = Depends(authorize),
+    # me: str = Depends(authorize),
 ) -> House:
     """
     This function returns a house by ID.
     """
     # TODO: implement permission checking
-    raise HTTPException(status_code=501, detail="Not implemented")
+    query = select(House).where(House.id == house_id)
+    house = (await db.exec(query)).one()
+    return house
+    
+    
+    # raise HTTPException(status_code=501, detail="Not implemented")
 
+@router.post("/houses/create")
+async def create_house(req: HouseRequest, db: Database = Depends(db.use)):
+    house = House(**req.model_dump())
+    db.add(house)
+    await db.commit()
+    await db.refresh(house)
+    return house
+
+@router.patch("/houses/update/{house_id}")
+async def update_house(house_id: int, req: HouseRequest, db: Database = Depends(db.use)):
+    query = select(House).where(House.id == house_id)
+    house = (await db.exec(query)).one()
+    house.lat = req.lat
+    house.lon = req.lon
+    db.add(house)
+    await db.commit()
+    await db.refresh(house)
+    return house
+
+@router.delete("/houses/delete/{house_id}")
+async def delete_house(house_id: int, db: Database = Depends(db.use)):
+    query = select(House).where(House.id == house_id)
+    house = (await db.exec(query)).one()
+    await db.delete(house)
+    await db.commit()
+    return house
 
 @router.get(
     "/assets/{asset_hash}",

@@ -85,7 +85,7 @@ class Group(SQLModel, table=True):
     bio: str
     people: list[User] = Relationship(back_populates="group")
     users: list[User] = Relationship(back_populates="group")
-    house_id: Optional[int] = Field(foreign_key="house.id")
+    house_id: Optional[int] = Field(default=None, foreign_key="house.id")
     house: Optional["House"] = Relationship(back_populates="group")
 
 
