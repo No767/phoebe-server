@@ -3,7 +3,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 import db
-import api
+# import api
 import uvicorn
 import argparse
 
@@ -15,7 +15,7 @@ async def with_init_db(_: FastAPI):
 
 
 app = FastAPI(lifespan=with_init_db)
-app.include_router(api.router)
+# app.include_router(api.router)
 
 
 if __name__ == "__main__":
