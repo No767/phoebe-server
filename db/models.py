@@ -5,10 +5,11 @@ from sqlmodel import (
     JSON,
     Relationship,
 )
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from datetime import datetime
 from typing import Optional, Literal, Union
 from enum import Enum
+from . import consts
 
 
 class AccessLevel(int, Enum):
@@ -52,11 +53,12 @@ class GroupRelationship(SQLModel, table=True):
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    email: str
     bio: str
     color: str
-    gender: str
     preferred_name: str
     nickname: Optional[str] = None
+    genders: list[str] = Field(default=[], sa_column=Column(JSON))
     pronouns: list[str] = Field(default=[], sa_column=Column(JSON))
     sexual_orientations: list[str] = Field(default=[], sa_column=Column(JSON))
 
@@ -67,6 +69,24 @@ class User(SQLModel, table=True):
     # group_relationships is the relationships that the user has with other
     # groups.
     group_relationships: list["Group"] = Relationship(link_model=GroupRelationship)
+
+    @field_validator("genders")
+    @classmethod
+    def validate_genders(cls, genders: list[str]):
+        for gender in genders:
+            assert gender in consts.GENDERS
+
+    @field_validator("pronouns")
+    @classmethod
+    def validate_pronouns(cls, pronouns: list[str]):
+        for pronoun in pronouns:
+            assert pronoun in consts.PRONOUNS
+
+    @field_validator("sexual_orientations")
+    @classmethod
+    def validate_sexual_orientations(cls, sexual_orientations: list[str]):
+        for sexual_orientation in sexual_orientations:
+            assert sexual_orientation in consts.SEXUAL_ORIENTATIONS
 
 
 class UserPassword(SQLModel, table=True):
@@ -112,6 +132,7 @@ class Asset(SQLModel, table=True):
     data: bytes
     created_at: datetime = Field(default_factory=datetime.utcnow)
     content_type: str
+    alt: str | None = Field(default=None)
 
 
 class ChatContentText(BaseModel):

@@ -17,9 +17,9 @@ SESSION_RENEW_AFTER = timedelta(days=1)
 async def authorize(
     authorization: str = Header(),
     db: Database = Depends(db.use),
-) -> AsyncGenerator[str, None]:
+) -> AsyncGenerator[int, None]:
     """
-    This function asserts the authorization header and returns the username if
+    This function asserts the authorization header and returns the user ID if
     the token is valid.
     """
 
@@ -47,7 +47,8 @@ async def authorize(
             db.add(session)
             await db.commit()
 
-    yield session.username
+    assert session.user_id is not None
+    yield session.user_id
 
 
 def new_session(db: Database, user_id: int) -> Session:

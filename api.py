@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter, HTTPException, UploadFile
+from fastapi import Depends, APIRouter, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlmodel import select
 from pydantic import BaseModel
@@ -54,7 +54,7 @@ async def update_user(
 
 
 class LoginRequest(BaseModel):
-    username: str
+    email: str
     password: str
 
 
@@ -66,15 +66,35 @@ async def login(
     """
     This function logs in a user and returns a session token.
     """
-    user = (await db.exec(select(User).where(User.username == req.username))).first()
-    if user is None or not verify_password(req.password, user.passhash):
+    user = (await db.exec(select(User).where(User.email == req.email))).first()
+    if user is None:
         raise HTTPException(status_code=401, detail="Unauthorized")
-    return new_session(db, user.username)
+
+    passhash = (
+        await db.exec(select(UserPassword.passhash).where(UserPassword.id == user.id))
+    ).one()
+    if not verify_password(req.password, passhash):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    assert user.id is not None
+    return new_session(db, user.id)
 
 
 class RegisterRequest(BaseModel):
-    username: str
+    """
+    This class is used to register a new user.
+    """
+
+    email: str
     password: str
+
+    bio: str
+    color: str
+    nickname: Optional[str]
+    preferred_name: str
+    genders: list[str]
+    pronouns: list[str]
+    sexual_orientations: list[str]
 
 
 @router.post("/register")
@@ -85,23 +105,19 @@ async def register(
     """
     This function registers a new user and returns a session token.
     """
-    raise HTTPException(status_code=501, detail="Not implemented")
 
-    # async with db.begin_nested():
-    #     user = User()
-    #     db.add(user)
-    #     await db.commit()
-    #
-    # userpw = UserPassword(id=user.id, passhash=hash_password(req.password))
-    # db.add(userpw)
-    # await db.commit()
-    #
-    # user = User(
-    #     username=req.username,
-    #     passhash=hash_password(req.password),
-    # )
-    # db.add(user)
-    # return new_session(db, user.username)
+    async with db.begin_nested():
+        user = User(**req.model_dump())
+        db.add(user)
+
+    await db.refresh(user)
+    assert user.id is not None
+
+    async with db.begin_nested():
+        userpw = UserPassword(id=user.id, passhash=hash_password(req.password))
+        db.add(userpw)
+
+    return new_session(db, user.id)
 
 
 @router.get("/groups/{group_id}")
@@ -242,6 +258,7 @@ async def delete_house(house_id: int, db: Database = Depends(db.use)) -> House:
 async def get_asset(
     asset_hash: str,
     db: Database = Depends(db.use),
+    me: str = Depends(authorize),
 ) -> StreamingResponse:
     """
     This function returns an asset by hash.
@@ -255,16 +272,40 @@ async def get_asset(
     return StreamingResponse(stream, media_type=asset.content_type)
 
 
+class GetAssetMetadataResponse(BaseModel):
+    content_type: str
+    alt: str | None = None
+
+
+@router.get("/assets/{asset_hash}/metadata")
+async def get_asset_metadata(
+    asset_hash: str,
+    db: Database = Depends(db.use),
+    me: str = Depends(authorize),
+) -> GetAssetMetadataResponse:
+    """
+    This function returns metadata for an asset by hash.
+    """
+
+    asset = (await db.exec(select(Asset).where(Asset.hash == asset_hash))).first()
+    if asset is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    return GetAssetMetadataResponse(**asset.model_dump())
+
+
 class UploadFileResponse(BaseModel):
     hash: str
     content_type: str
+    alt: str | None = None
 
 
 @router.post("/assets")
 async def upload_asset(
     file: UploadFile,
+    alt: Optional[str] = Form(),
     db: Database = Depends(db.use),
-    _: str = Depends(authorize),
+    me: str = Depends(authorize),
 ) -> UploadFileResponse:
     """
     Uploads an asset and returns its hash.
@@ -278,10 +319,15 @@ async def upload_asset(
         raise HTTPException(status_code=400, detail="File is too large")
 
     data = await file.read()
-    hash = base64.b64encode(hashlib.sha256(data).digest()).decode("utf-8")
+    hash = base64.urlsafe_b64encode(hashlib.sha256(data).digest()).decode("utf-8")
     content_type = file.content_type
 
-    asset = Asset(hash=hash, data=data, content_type=content_type)
+    asset = Asset(
+        hash=hash,
+        data=data,
+        content_type=content_type,
+        alt=alt if alt else None,
+    )
     db.add(asset)
 
     return UploadFileResponse(**asset.model_dump())
