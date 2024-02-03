@@ -40,12 +40,12 @@ token: jsonpath "$.token"
 POST http://localhost:5765/api/assets
 Authorization: Bearer {{token}}
 [MultipartFormData]
-file: file,giga.hurl; text/plain
-alt: The current test file
+file: file,amogus.png;
+alt: Red among us
 HTTP 200
 [Asserts]
 jsonpath "$.hash" exists
-jsonpath "$.alt" == "The current test file"
+jsonpath "$.alt" == "Red among us"
 [Captures]
 asset_hash: jsonpath "$.hash"
 
@@ -53,15 +53,15 @@ GET http://localhost:5765/api/assets/{{asset_hash}}
 Authorization: Bearer {{token}}
 HTTP 200
 [Asserts]
-header "Content-Type" == "text/plain; charset=utf-8"
+header "Content-Type" == "image/png"
 bytes count > 10
 
 GET http://localhost:5765/api/assets/{{asset_hash}}/metadata
 Authorization: Bearer {{token}}
 HTTP 200
 [Asserts]
-jsonpath "$.alt" == "The current test file"
-jsonpath "$.content_type" == "text/plain"
+jsonpath "$.alt" == "Red among us"
+jsonpath "$.content_type" == "image/png"
 
 #
 # Current User testing
@@ -95,3 +95,22 @@ jsonpath "$.id" == {{user_id}}
 jsonpath "$.email" == "diamond@libdb.so"
 jsonpath "$.nickname" == "gold"
 jsonpath "$.bio" == "I'm a diamond, but I'm also gold."
+
+PATCH http://localhost:5765/api/users/me
+Authorization: Bearer {{token}}
+{
+	"email": "diamond@libdb.so",
+	"password": "very weak password",
+	"bio": "I'm a diamond, but I'm also gold.",
+	"color": "#f00",
+	"nickname": "gold",
+	"preferred_name": "Diamond",
+	"genders": ["woman", "transgender woman"],
+	"pronouns": ["she/her", "it/its"],
+	"sexual_orientations": ["bisexual"],
+	"avatar_hash": "{{asset_hash}}"
+}
+HTTP 200
+[Asserts]
+jsonpath "$.id" == {{user_id}}
+jsonpath "$.avatar_hash" == "{{asset_hash}}"

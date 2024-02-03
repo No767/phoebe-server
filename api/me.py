@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlmodel import select
 from sessions import authorize, hash_password, verify_password, new_session
+from api.assets import assert_asset_hash
 from db import Database
 from db.models import *
 import db
@@ -46,7 +47,8 @@ class RegisterRequest(BaseModel):
 
     bio: str
     color: str
-    nickname: Optional[str]
+    avatar_hash: Optional[str] = None
+    nickname: Optional[str] = None
     preferred_name: str
     genders: list[str]
     pronouns: list[str]
@@ -61,6 +63,9 @@ async def register(
     """
     This function registers a new user and returns a session token.
     """
+
+    if req.avatar_hash is not None:
+        await assert_asset_hash(db, req.avatar_hash)
 
     async with db.begin_nested():
         user = User(**req.model_dump())
@@ -102,10 +107,15 @@ async def update_user(
     ).one()
 
     for key, value in req.model_dump().items():
-        if key == "password":
-            password.passhash = hash_password(value)
-        else:
-            setattr(user, key, value)
+        match key:
+            case "password":
+                password.passhash = hash_password(value)
+            case "avatar_hash":
+                if value is not None:
+                    await assert_asset_hash(db, value)
+                setattr(user, key, value)
+            case _:
+                setattr(user, key, value)
 
     db.add(user)
     db.add(password)

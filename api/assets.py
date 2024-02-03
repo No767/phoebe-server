@@ -103,3 +103,9 @@ async def upload_asset(
     db.add(asset)
 
     return UploadFileResponse(**asset.model_dump())
+
+
+async def assert_asset_hash(db: Database, hash: str):
+    asset = (await db.exec(select(Asset.hash).where(Asset.hash == hash))).first()
+    if asset is None:
+        raise HTTPException(status_code=400, detail="Asset hash does not exist")

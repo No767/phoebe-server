@@ -56,6 +56,7 @@ class User(SQLModel, table=True):
     email: str
     bio: str
     color: str
+    avatar_hash: Optional[str] = Field(default=None, foreign_key="asset.hash")
     preferred_name: str
     nickname: Optional[str] = None
     genders: list[str] = Field(default=[], sa_column=Column(JSON))

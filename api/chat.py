@@ -5,6 +5,7 @@ from db import Database
 from db.models import *
 from sessions import authorize
 from typing import Union
+from api.assets import assert_asset_hash
 import db
 
 router = APIRouter(tags=["chat"])
