@@ -70,7 +70,11 @@ async def user_view_from_db(db: Database, me_id: int, user: User) -> "UserView":
     This function returns a UserView object, which is a view of a user's profile
     that is tailored to the current user's access level.
     """
-    level = await group_level(db, me_id, user.group_id)
+    level = (
+        await group_level(db, me_id, user.group_id)
+        if user.group_id
+        else AccessLevel.PUBLIC
+    )
     return user_view(user, level)
 
 
