@@ -61,9 +61,46 @@ async def register(
     """
     This function registers a new user and returns a session token.
     """
-    user = User(
-        username=req.username,
-        passhash=hash_password(req.password),
-    )
-    db.add(user)
-    return new_session(db, user.username)
+    raise HTTPException(status_code=501, detail="Not implemented")
+
+    # async with db.begin_nested():
+    #     user = User()
+    #     db.add(user)
+    #     await db.commit()
+    #
+    # userpw = UserPassword(id=user.id, passhash=hash_password(req.password))
+    # db.add(userpw)
+    # await db.commit()
+    #
+    # user = User(
+    #     username=req.username,
+    #     passhash=hash_password(req.password),
+    # )
+    # db.add(user)
+    # return new_session(db, user.username)
+
+
+@router.get("/groups/{group_id}")
+async def get_group(
+    group_id: int,
+    db: Database = Depends(db.use),
+    me: str = Depends(authorize),
+) -> Group:
+    """
+    This function returns a group by ID.
+    """
+    # TODO: implement permission checking
+    raise HTTPException(status_code=501, detail="Not implemented")
+
+
+@router.get("/houses/{house_id}")
+async def get_house(
+    house_id: int,
+    db: Database = Depends(db.use),
+    me: str = Depends(authorize),
+) -> House:
+    """
+    This function returns a house by ID.
+    """
+    # TODO: implement permission checking
+    raise HTTPException(status_code=501, detail="Not implemented")

@@ -15,8 +15,8 @@ class User(SQLModel, table=True):
     bio: str
     color: str
     gender: str
-    nickname: str
     preferred_name: str
+    nickname: Optional[str] = None
     pronouns: list[str] = Field(default=[], sa_column=Column(JSON))
     sexual_orientations: list[str] = Field(default=[], sa_column=Column(JSON))
     group_id: Optional[int] = Field(default=None, foreign_key="group.id")
