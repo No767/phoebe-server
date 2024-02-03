@@ -15,6 +15,7 @@ async def search_nearest_houses(
     limit=100,
 ) -> list[House]:
     heap = []
+
     for house in await db.exec(select(House)):
         distance = calculate_distance(
             (lat, lon),

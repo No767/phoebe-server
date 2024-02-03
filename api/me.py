@@ -67,6 +67,9 @@ async def register(
     if req.avatar_hash is not None:
         await assert_asset_hash(db, req.avatar_hash)
 
+    if req.nickname is None:
+        req.nickname = req.preferred_name
+
     async with db.begin_nested():
         user = User(**req.model_dump())
         db.add(user)
@@ -105,6 +108,9 @@ async def update_user(
     password = (
         await db.exec(select(UserPassword).where(UserPassword.id == me_id))
     ).one()
+
+    if req.nickname is None:
+        req.nickname = req.preferred_name
 
     for key, value in req.model_dump().items():
         match key:

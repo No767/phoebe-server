@@ -3,12 +3,13 @@ from sqlmodel import (
     SQLModel,
     Column,
     JSON,
-    Relationship,
 )
 from pydantic import BaseModel, field_validator
 from datetime import datetime
 from typing import Optional, Literal, Union
 from enum import Enum
+from utils import colors
+from db.id import generate_id
 from . import consts
 from .id import generate_id
 
@@ -54,23 +55,22 @@ class GroupRelationship(SQLModel, table=True):
 
 class User(SQLModel, table=True):
     id: int = Field(default_factory=generate_id, primary_key=True)
-    email: str
+    email: str = Field(unique=True)
     bio: str
     color: str
     avatar_hash: Optional[str] = Field(default=None, foreign_key="asset.hash")
     preferred_name: str
-    nickname: Optional[str] = None
+    nickname: str
     genders: list[str] = Field(default=[], sa_column=Column(JSON))
     pronouns: list[str] = Field(default=[], sa_column=Column(JSON))
     sexual_orientations: list[str] = Field(default=[], sa_column=Column(JSON))
 
     # group_id is the group that the user belongs to.
     group_id: Optional[int] = Field(default=None, foreign_key="group.id")
-    group: Optional["Group"] = Relationship(back_populates="people")
 
     # group_relationships is the relationships that the user has with other
     # groups.
-    group_relationships: list["Group"] = Relationship(link_model=GroupRelationship)
+    # group_relationships: list["Group"] = Relationship(link_model=GroupRelationship)
 
     @field_validator("genders")
     @classmethod
@@ -90,6 +90,11 @@ class User(SQLModel, table=True):
         for sexual_orientation in sexual_orientations:
             assert sexual_orientation in consts.SEXUAL_ORIENTATIONS
 
+    @field_validator("color")
+    @classmethod
+    def validate_color(cls, color: str):
+        colors.assert_valid_color(color)
+
 
 class UserPassword(SQLModel, table=True):
     id: Optional[int] = Field(primary_key=True, foreign_key="user.id")
@@ -102,13 +107,17 @@ class Group(SQLModel, table=True):
     It is not necessarily a house (think group of partners needing a housemate).
     """
 
-    id: int = Field(default=generate_id, primary_key=True)
+    id: int = Field(default_factory=generate_id, primary_key=True)
     name: str
     bio: str
-    people: list[User] = Relationship(back_populates="group")
-    users: list[User] = Relationship(back_populates="group")
+    color: str
+    icon_hash: Optional[str] = Field(default=None, foreign_key="asset.hash")
     house_id: Optional[int] = Field(default=None, foreign_key="house.id")
-    house: Optional["House"] = Relationship(back_populates="group")
+
+    @field_validator("color")
+    @classmethod
+    def validate_color(cls, color: str):
+        colors.assert_valid_color(color)
 
 
 class House(SQLModel, table=True):
@@ -120,7 +129,7 @@ class House(SQLModel, table=True):
     id: int = Field(default_factory=generate_id, primary_key=True)
     lat: float
     lon: float
-    group: Optional[Group] = Relationship(back_populates="house")
+    description: str
 
 
 class Asset(SQLModel, table=True):
@@ -172,12 +181,10 @@ class ChatMessage(SQLModel, table=True):
     # group_id is the origin group that the message was sent from.
     # When group_id is None, the group was deleted.
     group_id: int | None = Field(foreign_key="group.id")
-    group: Optional[Group] = Relationship()
 
     # author_id is the original author of the message.
     # The author will belong to the group.
     author_id: int | None = Field(foreign_key="user.id")
-    author: Optional[User] = Relationship()
 
     # content is the message content.
     content: Union[ChatContentText, ChatContentSticker, ChatContentImage] = Field(
