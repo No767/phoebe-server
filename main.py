@@ -17,10 +17,10 @@ async def with_init_db(_: FastAPI):
 
 app = FastAPI(lifespan=with_init_db)
 app.include_router(api.router)
-add_pagination(app)
 
 
 if __name__ == "__main__":
+    
     parser = argparse.ArgumentParser(prog="py-rest-template")
     parser.add_argument("-H", "--host", default="127.0.0.1", help="The host to bind to")
     parser.add_argument("-p", "--port", default=5765, help="Port to bind to", type=int)
@@ -28,5 +28,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     db.set_sqlite_path(args.database)
+    add_pagination(app)
 
     uvicorn.run(app, host=args.host, port=args.port)
