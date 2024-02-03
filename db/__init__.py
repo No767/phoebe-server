@@ -8,6 +8,7 @@ import sqlmodel
 import sqlmodel.ext.asyncio.session
 from typing import AsyncGenerator
 
+from . import models  # type: ignore
 
 Database = sqlmodel.ext.asyncio.session.AsyncSession
 
