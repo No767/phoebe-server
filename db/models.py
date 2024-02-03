@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import Optional, Literal, Union
 from enum import Enum
 from . import consts
+from .id import generate_id
 
 
 class AccessLevel(int, Enum):
@@ -37,13 +38,13 @@ class GroupRelationship(SQLModel, table=True):
     is not used, and the highest access level is implied.
     """
 
-    user_id: Optional[int] = Field(
-        default=None,
+    user_id: int = Field(
+        default_factory=generate_id,
         foreign_key="user.id",
         primary_key=True,
     )
-    group_id: Optional[int] = Field(
-        default=None,
+    group_id: int = Field(
+        default_factory=generate_id,
         foreign_key="group.id",
         primary_key=True,
     )
@@ -52,7 +53,7 @@ class GroupRelationship(SQLModel, table=True):
 
 
 class User(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int = Field(default_factory=generate_id, primary_key=True)
     email: str
     bio: str
     color: str
@@ -101,7 +102,7 @@ class Group(SQLModel, table=True):
     It is not necessarily a house (think group of partners needing a housemate).
     """
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int = Field(default=generate_id, primary_key=True)
     name: str
     bio: str
     people: list[User] = Relationship(back_populates="group")
@@ -116,7 +117,7 @@ class House(SQLModel, table=True):
     Its location is roughly accurate to the nearest city.
     """
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int = Field(default_factory=generate_id, primary_key=True)
     lat: float
     lon: float
     group: Optional[Group] = Relationship(back_populates="house")
@@ -166,7 +167,7 @@ class ChatContentImage(BaseModel):
 class ChatMessage(SQLModel, table=True):
     # id is the unique identifier for the message.
     # It is defined as a Snowflake ID and therefore also contains a timestamp.
-    id: int = Field(primary_key=True)
+    id: int = Field(default_factory=generate_id, primary_key=True)
 
     # group_id is the origin group that the message was sent from.
     # When group_id is None, the group was deleted.
