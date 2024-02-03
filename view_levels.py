@@ -1,6 +1,6 @@
 from db.models import *
-from pydantic import BaseModel
-from typing import Union
+from pydantic import BaseModel, Field
+from typing import Union, Literal
 
 
 class PublicUser(BaseModel):
@@ -22,8 +22,21 @@ class Level3User(Level2User):
 
 
 class UserView(BaseModel):
-    level: int
-    user: Union[PublicUser, Level1User, Level2User, Level3User]
+    class PublicUser(PublicUser):
+        level: Literal[0]
+
+    class Level1User(Level1User):
+        level: Literal[1]
+
+    class Level2User(Level2User):
+        level: Literal[2]
+
+    class Level3User(Level3User):
+        level: Literal[3]
+
+    user: Union[PublicUser, Level1User, Level2User, Level3User] = Field(
+        discriminator="level",
+    )
 
 
 if __name__ == "__main__":
