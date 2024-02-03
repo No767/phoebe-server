@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from sessions import authorize, hash_password, verify_password, new_session
 from view_levels import *
 from db.models import *
+from db.models import User as UserClass
 from db import Database
 import db
 import base64
@@ -13,6 +14,15 @@ router = APIRouter(
     prefix="/api",
     tags=["api"],
 )
+
+class UserModel(BaseModel):
+    color: str
+    pronouns: list[str]
+    
+class UserView(BaseModel):
+    id: Optional[int]
+    level: int
+    user: User
 
 
 @router.get("/users/me")
@@ -25,6 +35,20 @@ async def get_self(
     """
     raise HTTPException(status_code=501, detail="Not implemented")
 
+@router.patch("/users/update")
+async def update_user(user: UserModel = Depends(authorize), db: Database = Depends(db.use)) -> UserModel:
+    """
+    Updates the specified authenticated user
+    """
+    user_data = User(**user)
+    await db.add(user_data)
+    await db.commit()
+    return user
+
+# @router.delete("/users/delete")
+# async def delete_user()
+    
+    
 
 class LoginRequest(BaseModel):
     username: str
@@ -195,3 +219,11 @@ async def send_chat_message(
     This function sends a chat message to a group.
     """
     raise HTTPException(status_code=501, detail="Not implemented")
+    user = UserClass(
+        id=uuid.uuid4().hex,
+        preferred_name=req.username,
+    )
+    user_password = UserPassword(id=user.id, passhash=req.password)
+    db.add(user)
+    # db.add(user_password)
+    return new_session(db, user.preferred_name)
