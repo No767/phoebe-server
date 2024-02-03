@@ -108,13 +108,16 @@ async def register(
 async def get_group(
     group_id: int,
     db: Database = Depends(db.use),
-    me: str = Depends(authorize),
+    # me: str = Depends(authorize),
 ) -> Group:
     """
     This function returns a group by ID.
     """
+    
     # TODO: implement permission checking
-    raise HTTPException(status_code=501, detail="Not implemented")
+    query = select(Group).where(Group.id == group_id)
+    group = (await db.exec(query)).one()
+    return group
 
 
 class GroupRequest(BaseModel):
@@ -123,7 +126,10 @@ class GroupRequest(BaseModel):
 
 
 @router.post("/groups/create")
-async def create_group(req: GroupRequest, db: Database = Depends(db.use)):
+async def create_group(req: GroupRequest, db: Database = Depends(db.use)) -> Group:
+    """
+    Creates a group, which represents a group of users
+    """
     # TODO: implement permissions checking
     group = Group(name=req.name, bio=req.bio)
     db.add(group)
@@ -133,7 +139,10 @@ async def create_group(req: GroupRequest, db: Database = Depends(db.use)):
 
 
 @router.delete("/groups/delete/{group_id}")
-async def delete_group(group_id: int, db: Database = Depends(db.use)):
+async def delete_group(group_id: int, db: Database = Depends(db.use)) -> Group:
+    """
+    Deletes a group from the database using the specified ID
+    """
     # TODO: Make sure that the user has proper permissions to delete stuff
     query = select(Group).where(Group.id == group_id)
     group = (await db.exec(query)).one()
@@ -147,8 +156,11 @@ async def update_group(
     group_id: int,
     req: GroupRequest,
     db: Database = Depends(db.use),
-    me: str = Depends(authorize),
-):
+    # me: str = Depends(authorize),
+) -> Group:
+    """
+    Updates a group using the specified ID
+    """
     query = select(Group).where(Group.id == group_id)
     res = (await db.exec(query)).one()
     res.name = req.name
@@ -180,7 +192,10 @@ async def get_house(
     # raise HTTPException(status_code=501, detail="Not implemented")
 
 @router.post("/houses/create")
-async def create_house(req: HouseRequest, db: Database = Depends(db.use)):
+async def create_house(req: HouseRequest, db: Database = Depends(db.use)) -> House:
+    """
+    Creates a new house
+    """
     house = House(**req.model_dump())
     db.add(house)
     await db.commit()
@@ -188,7 +203,10 @@ async def create_house(req: HouseRequest, db: Database = Depends(db.use)):
     return house
 
 @router.patch("/houses/update/{house_id}")
-async def update_house(house_id: int, req: HouseRequest, db: Database = Depends(db.use)):
+async def update_house(house_id: int, req: HouseRequest, db: Database = Depends(db.use)) -> House:
+    """
+    Updates the information of a current house
+    """
     query = select(House).where(House.id == house_id)
     house = (await db.exec(query)).one()
     house.lat = req.lat
@@ -199,7 +217,10 @@ async def update_house(house_id: int, req: HouseRequest, db: Database = Depends(
     return house
 
 @router.delete("/houses/delete/{house_id}")
-async def delete_house(house_id: int, db: Database = Depends(db.use)):
+async def delete_house(house_id: int, db: Database = Depends(db.use)) -> House:
+    """
+    Deletes a house from the database
+    """
     query = select(House).where(House.id == house_id)
     house = (await db.exec(query)).one()
     await db.delete(house)
