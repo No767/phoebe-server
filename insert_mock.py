@@ -144,6 +144,9 @@ def random_registration() -> RegisterRequest:
         case _:
             assert False
 
+    genders = list(set(genders))
+    pronouns = list(set([pronoun, random.choice(PRONOUNS)]))
+
     return RegisterRequest(
         email=fake.email(),
         password=fake.password(),
@@ -152,7 +155,7 @@ def random_registration() -> RegisterRequest:
         preferred_name=preferred_name,
         nickname=fake.first_name_nonbinary(),
         genders=genders,
-        pronouns=[pronoun, random.choice(PRONOUNS)],
+        pronouns=pronouns,
         sexual_orientations=random.choices(SEXUAL_ORIENTATIONS, k=1),
     )
 
