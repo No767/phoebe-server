@@ -22,12 +22,7 @@
 			let
 				pkgs = nixpkgs.legacyPackages.${system};
 
-				inherit (poetry2nix.lib.mkPoetry2Nix { inherit pkgs; })
-					mkPoetryApplication
-					defaultPoetryOverrides;
-			in
-			{
-				packages.default = mkPoetryApplication {
+				poetryApplication = mkPoetryApplication {
 					projectDir = self;
 					overrides = defaultPoetryOverrides.extend (self: super: let
 						fixPoetryPackage = pkg: pkg.overridePythonAttrs (old: {
@@ -54,8 +49,16 @@
 					);
 				};
 
+				inherit (poetry2nix.lib.mkPoetry2Nix { inherit pkgs; })
+					mkPoetryApplication
+					defaultPoetryOverrides;
+			in
+			{
+				packages = {
+					default = poetryApplication.dependencyEnv;
+				};
 				devShell = pkgs.mkShell {
-					inputsFrom = [ self.packages.${system}.default ];
+					inputsFrom = [ poetryApplication ];
 
 					packages = with pkgs; [
 						poetry
