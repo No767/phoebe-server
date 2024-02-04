@@ -11,6 +11,7 @@ from viewlevels.group import assert_group_open_dms, group_level
 from viewlevels.user import UserView, user_view_from_db
 from sse_starlette.sse import EventSourceResponse, AsyncContentStream
 from broadcaster import Broadcast
+from datetime import datetime
 import asyncio
 
 router = APIRouter(tags=["chat"])
@@ -45,6 +46,7 @@ class ChatMessageResponse(BaseModel):
     author_id: int
     author: UserView
     content: ChatContent
+    created_at: datetime
 
 
 @router.get("/chat/groups/{group_id}/messages")

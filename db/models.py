@@ -206,3 +206,6 @@ class ChatMessage(SQLModel, table=True):
 
     # content is the message content.
     content: ChatContent | None = Field(default=None, sa_column=Column(JSON))
+
+    # created_at is the time that the message was created.
+    created_at: datetime = Field(default_factory=datetime.utcnow)
