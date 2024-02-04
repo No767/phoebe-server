@@ -55,6 +55,13 @@ class GroupRelationship(SQLModel, table=True):
     open_dms: bool = Field(default=False)
 
 
+class EmergencyContact(BaseModel):
+    name: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    notes: Optional[str] = None
+
+
 class User(SQLModel, table=True):
     id: int = Field(default_factory=generate_id, primary_key=True)
     email: str = Field(unique=True)
@@ -66,6 +73,10 @@ class User(SQLModel, table=True):
     genders: list[str] = Field(default=[], sa_column=Column(JSON))
     pronouns: list[str] = Field(default=[], sa_column=Column(JSON))
     sexual_orientations: list[str] = Field(default=[], sa_column=Column(JSON))
+    emergency_contacts: list[EmergencyContact] = Field(
+        default=[],
+        sa_column=Column(JSON),
+    )
 
     # group_id is the group that the user belongs to.
     group_id: Optional[int] = Field(default=None, foreign_key="group.id")

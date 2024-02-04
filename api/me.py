@@ -111,6 +111,7 @@ async def get_self(
 class UpdateUserRequest(RegisterRequest):
     avatar_hash: Optional[str] = None
     photo_hashes: list[str] = []
+    emergency_contacts: list[EmergencyContact] = []
 
 
 @router.patch("/users/me")

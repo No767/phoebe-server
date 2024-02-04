@@ -27,8 +27,7 @@ class Level2UserData(Level1UserData):
 
 
 class Level3UserData(Level2UserData):
-    # TODO
-    pass
+    emergency_contacts: list[EmergencyContact]
 
 
 class PublicUser(PublicUserData):
