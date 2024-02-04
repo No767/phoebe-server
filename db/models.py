@@ -169,7 +169,7 @@ class ChatContentImage(BaseModel):
 
 ChatContent = Annotated[
     Union[ChatContentText, ChatContentSticker, ChatContentImage],
-    Field(discriminator="type", sa_column=Column(JSON)),
+    Field(default={}, discriminator="type", sa_column=Column(JSON)),
 ]
 
 
@@ -187,4 +187,4 @@ class ChatMessage(SQLModel, table=True):
     author_id: int | None = Field(foreign_key="user.id")
 
     # content is the message content.
-    content: ChatContent
+    content: ChatContent | None = Field(default=None, sa_column=Column(JSON))

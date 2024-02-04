@@ -6,6 +6,8 @@ import sqlalchemy.ext.asyncio
 import sqlalchemy.ext.asyncio.session
 import sqlmodel
 import sqlmodel.ext.asyncio.session
+import json
+import pydantic.json
 from typing import AsyncGenerator
 
 from . import models  # type: ignore
@@ -25,6 +27,14 @@ def set_sqlite_path(path: str) -> None:
     sqlitePath = path
 
 
+def _pydantic_json_serializer(*args, **kwargs) -> str:
+    """
+    Encodes json in the same way that pydantic does.
+    See https://stackoverflow.com/a/68714342.
+    """
+    return json.dumps(*args, default=pydantic.json.pydantic_encoder, **kwargs)
+
+
 _engine: sqlalchemy.ext.asyncio.AsyncEngine | None = None
 
 
@@ -33,7 +43,11 @@ async def init_db() -> None:
     This function initializes the database engine.
     """
     global _engine
-    _engine = sqlalchemy.ext.asyncio.create_async_engine(sqlite_url(), echo=True)
+    _engine = sqlalchemy.ext.asyncio.create_async_engine(
+        sqlite_url(),
+        echo=True,
+        json_serializer=_pydantic_json_serializer,
+    )
 
     async with _engine.begin() as conn:
         await conn.run_sync(sqlmodel.SQLModel.metadata.create_all)

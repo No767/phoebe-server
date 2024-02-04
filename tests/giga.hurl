@@ -294,6 +294,7 @@ Authorization: Bearer {{token}}
 HTTP 200
 [Asserts]
 jsonpath "$.id" exists
-jsonpath "$.content" == "Hello, I'm Diamond!"
-jsonpath "$.sender.id" == {{user_id}}
-jsonpath "$.sender_id" == {{user_id}}
+jsonpath "$.content.type" == "text"
+jsonpath "$.content.markdown" == "Hello, I'm Diamond!"
+jsonpath "$.author.id" == {{user_id}}
+jsonpath "$.author_id" == {{user_id}}
