@@ -164,3 +164,10 @@ jsonpath "$.id" == {{group_id}}
 jsonpath "$.name" == "gayer house"
 jsonpath "$.bio" == "A house for gayer people"
 jsonpath "$.color" == "#00f"
+
+POST http://localhost:5765/api/groups/{{group_id}}/interested
+Authorization: Bearer {{token}}
+HTTP 200
+[Asserts]
+jsonpath "$.group_id" == {{group_id}}
+jsonpath "$.level" == 1

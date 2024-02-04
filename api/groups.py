@@ -116,3 +116,21 @@ async def update_group(
     await db.commit()
     await db.refresh(group)
     return group
+
+@router.post("/groups/{group_id}/interested")
+async def group_interested(group_id: int, db: Database = Depends(db.use), me_id: int = Depends(authorize)) -> GroupRelationship:
+    query = select(GroupRelationship).where(GroupRelationship.group_id == group_id)
+    group = (await db.exec(query)).first()
+    print(type(group), group)
+    if group is not None and group.level >= AccessLevel.LEVEL1:
+        raise HTTPException(status_code=400, detail="The interested group already is interested")
+        
+    group_relationship = GroupRelationship(user_id=me_id, group_id=group_id, level=AccessLevel.LEVEL1)
+    db.add(group_relationship)
+    await db.commit()
+    await db.refresh(group_relationship)
+    return group_relationship
+    
+    
+        
+    
