@@ -1,5 +1,6 @@
 {
 	inputs = {
+		flake-compat.url = "github:edolstra/flake-compat";
 		flake-utils.url = "github:numtide/flake-utils";
 		nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 		poetry2nix = {
@@ -14,6 +15,7 @@
 			nixpkgs,
 			poetry2nix,
 			flake-utils,
+			flake-compat,
 		}:
 
 		flake-utils.lib.eachDefaultSystem (system:
@@ -23,7 +25,6 @@
 				inherit (poetry2nix.lib.mkPoetry2Nix { inherit pkgs; })
 					mkPoetryApplication
 					defaultPoetryOverrides;
-
 			in
 			{
 				packages.default = mkPoetryApplication {
