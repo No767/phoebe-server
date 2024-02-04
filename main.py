@@ -23,7 +23,6 @@ app.include_router(api.router)
 
 
 if __name__ == "__main__":
-    
     parser = argparse.ArgumentParser(prog="py-rest-template")
     parser.add_argument("-H", "--host", default="127.0.0.1", help="The host to bind to")
     parser.add_argument("-p", "--port", default=5765, help="Port to bind to", type=int)

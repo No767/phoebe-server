@@ -6,6 +6,7 @@ from db import Database
 from db.models import *
 from typing import Optional
 from utils.sessions import authorize
+from utils.assetutil import hash_bytes
 import io
 import db
 import base64
@@ -91,7 +92,7 @@ async def upload_asset(
         raise HTTPException(status_code=400, detail="File is too large")
 
     data = await file.read()
-    hash = base64.urlsafe_b64encode(hashlib.sha256(data).digest()).decode("utf-8")
+    hash = hash_bytes(data)
     content_type = file.content_type
 
     asset = Asset(

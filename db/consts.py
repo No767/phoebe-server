@@ -5,28 +5,35 @@ PRONOUNS = [
     "it/its",
     "xe/xem",
     "ze/zir",
-    "other"
+    "other",
 ]
 
 SEXUAL_ORIENTATIONS = [
-   "asexual",
-   "bisexual",
-   "demisexual",
-   "gay",
-   "heterosexual",
-   "lesbian",
-   "pansexual",
-   "queer",
-   "questioning",
-   "other"
+    "asexual",
+    "bisexual",
+    "demisexual",
+    "gay",
+    "heterosexual",
+    "lesbian",
+    "pansexual",
+    "queer",
+    "questioning",
+    "other",
 ]
 
 GENDERS = [
+    "male",
+    "female",
+    "non-binary",
     "agender",
     "androgynous",
     "bigender",
     "cisgender",
     "genderfluid",
     "genderqueer",
-    "nonbinary",
+    "masculine",
+    "feminine",
+    "transgender male",
+    "transgender female",
+    "other",
 ]

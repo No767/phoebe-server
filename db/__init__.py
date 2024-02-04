@@ -61,6 +61,16 @@ def set_sqlite_pragma(conn, _):
     cursor.close()
 
 
+def get() -> Database:
+    """
+    This function returns a new database session.
+    """
+    if _engine is None:
+        raise Exception("must call db.init() before using the database")
+
+    return sqlmodel.ext.asyncio.session.AsyncSession(_engine)
+
+
 # For async info on SQLModel, see
 # https://github.com/tiangolo/sqlmodel/pull/58.
 async def use() -> AsyncGenerator[Database, None]:
@@ -68,10 +78,7 @@ async def use() -> AsyncGenerator[Database, None]:
     This function is a context manager that yields a database session.
     Use this in FastAPI route functions to access the database.
     """
-    if _engine is None:
-        raise Exception("must call db.init() before using the database")
-
-    async with sqlmodel.ext.asyncio.session.AsyncSession(_engine) as session:
+    async with get() as session:
         try:
             yield session
             await session.commit()
