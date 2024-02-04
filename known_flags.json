@@ -1,0 +1,163 @@
+{
+  "genders": [
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Cisgender_flag.svg/320px-Cisgender_flag.svg.png",
+      "genders": [
+        "cisgender",
+        "male",
+        "female"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Agender_pride_flag.svg/320px-Agender_pride_flag.svg.png",
+      "genders": [
+        "agender"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Bigender_flag.svg/320px-Bigender_flag.svg.png",
+      "genders": [
+        "bigender"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Demiboy_Flag.svg/320px-Demiboy_Flag.svg.png",
+      "genders": [
+        "demiboy"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Demigirl_Flag.svg/320px-Demigirl_Flag.svg.png",
+      "genders": [
+        "demigirl"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Deminonbinary_flag.svg/320px-Deminonbinary_flag.svg.png",
+      "genders": [
+        "deminonbinary"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/FTM_flag.svg/320px-FTM_flag.svg.png",
+      "genders": [
+        "transgender male"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/MTF_flag.svg/320px-MTF_flag.svg.png",
+      "genders": [
+        "transgender female"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Genderfluidity_Pride-Flag.svg/320px-Genderfluidity_Pride-Flag.svg.png",
+      "genders": [
+        "genderfluid"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Genderqueer_Pride_Flag.svg/320px-Genderqueer_Pride_Flag.svg.png",
+      "genders": [
+        "genderqueer"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Intersex_Pride_Flag.svg/320px-Intersex_Pride_Flag.svg.png",
+      "genders": [
+        "intersex"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Non-binary_enby_pride_flag.svg/320px-Non-binary_enby_pride_flag.svg.png",
+      "genders": [
+        "non-binary"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Pangender_flag.svg/320px-Pangender_flag.svg.png",
+      "genders": [
+        "pangender"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Transgender_Pride_flag.svg/320px-Transgender_Pride_flag.svg.png",
+      "genders": [
+        "transgender male",
+        "transgender female"
+      ]
+    },
+    {
+      "flag": "https://static.wikia.nocookie.net/lgbtqia-sandbox/images/6/6b/Androgyne_Pride_Flag.png/revision/latest/scale-to-width-down/1000?cb=20220219163038",
+      "genders": [
+        "androgyne"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Altersex_pride_flag.png/320px-Altersex_pride_flag.png",
+      "genders": [
+        "altersex"
+      ]
+    },
+    {
+      "flag": "https://static.wikia.nocookie.net/gender/images/9/95/Man_flag.png/revision/latest?cb=20230715163114",
+      "genders": [
+        "male",
+        "masculine",
+        "transgender male"
+      ]
+    },
+    {
+      "flag": "https://static.wikia.nocookie.net/gender/images/b/b5/Woman_flag.png/revision/latest?cb=20230715182209",
+      "genders": [
+        "female",
+        "feminine",
+        "transgender female"
+      ]
+    }
+  ],
+  "sexual_orientations": [
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Aromantic_Pride_Flag.svg/320px-Aromantic_Pride_Flag.svg.png",
+      "sexual_orientations": [
+        "aromantic"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Asexual_Pride_Flag.svg/320px-Asexual_Pride_Flag.svg.png",
+      "sexual_orientations": [
+        "asexual"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Demisexual_Pride_Flag.svg/320px-Demisexual_Pride_Flag.svg.png",
+      "sexual_orientations": [
+        "demisexual"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Bisexual_Pride_Flag.svg/320px-Bisexual_Pride_Flag.svg.png",
+      "sexual_orientations": [
+        "bisexual"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Gay_Pride_Flag.svg/320px-Gay_Pride_Flag.svg.png",
+      "sexual_orientations": [
+        "gay"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Lesbian_Pride_Flag_2019.svg/320px-Lesbian_Pride_Flag_2019.svg.png",
+      "sexual_orientations": [
+        "lesbian"
+      ]
+    },
+    {
+      "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Pansexuality_Pride_Flag.svg/320px-Pansexuality_Pride_Flag.svg.png",
+      "sexual_orientations": [
+        "pansexual"
+      ]
+    }
+  ]
+}
