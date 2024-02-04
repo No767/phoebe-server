@@ -1,5 +1,6 @@
 from typing import AsyncGenerator
 from fastapi import HTTPException, Header, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from db import Database
 from db.models import User, Session
 from sqlmodel import select, update
@@ -15,7 +16,7 @@ SESSION_RENEW_AFTER = timedelta(days=1)
 
 
 async def authorize(
-    authorization: str = Header(),
+    creds: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
     db: Database = Depends(db.use),
 ) -> AsyncGenerator[int, None]:
     """
@@ -23,10 +24,7 @@ async def authorize(
     the token is valid.
     """
 
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Only Bearer token is supported")
-    authorization = authorization[7:]
-
+    authorization = creds.credentials
     now = datetime.now()
 
     session_query = await db.exec(
