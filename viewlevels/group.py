@@ -14,10 +14,8 @@ async def owns_group(
     This function returns True if the current user owns the specified group.
     """
     return (
-        await db.exec(
-            select(User.group_id).where(User.id == me_id and User.group_id == group_id)
-        )
-    ).first() is not None
+        await db.exec(select(User.group_id).where(User.id == me_id))
+    ).first() == group_id
 
 
 async def assert_owns_group(
@@ -70,6 +68,7 @@ async def assert_group_level(
     me_id: int,
     group_id: int,
     level: AccessLevel,
+    actual_level: AccessLevel | None = None,
 ) -> None:
     """
     This function raises an HTTPException if the current user does not have the
@@ -77,7 +76,9 @@ async def assert_group_level(
 
     If the user is part of this group, then the highest access level is implied.
     """
-    actual_level = await group_level(db, me_id, group_id)
+    if actual_level is None:
+        actual_level = await group_level(db, me_id, group_id)
+
     if actual_level < level:
         raise HTTPException(
             status_code=403,

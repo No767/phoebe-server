@@ -43,6 +43,7 @@ async def init_db() -> None:
 def set_sqlite_pragma(conn, _):
     cursor = conn.cursor()
     cursor.execute("PRAGMA journal_mode=wal2")
+    cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
 
 

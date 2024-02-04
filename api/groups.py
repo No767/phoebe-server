@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlmodel import select
-from viewlevels.group import assert_group_level, assert_owns_group
+from viewlevels.group import assert_group_level, assert_owns_group, group_level
 from db import Database
 from db.models import *
 from sessions import authorize
@@ -13,12 +13,20 @@ router = APIRouter(tags=["groups"])
 
 class GroupResponse(Group):
     people: list[UserView] = Field(sa_column=Column(JSON))
+    interested: bool
+    access_level: AccessLevel
 
 
 async def group_response(db: Database, me_id: int, group: Group) -> GroupResponse:
     people = (await db.exec(select(User).where(User.group_id == group.id))).all()
     people = [await user_view_from_db(db, me_id, person) for person in people]
-    return GroupResponse(people=people, **group.model_dump())
+    level = await group_level(db, me_id, group.id)
+    return GroupResponse(
+        **group.model_dump(),
+        people=people,
+        interested=level >= AccessLevel.LEVEL1,
+        access_level=level,
+    )
 
 
 @router.get("/groups/{group_id}")
@@ -39,6 +47,20 @@ async def get_group(
 
     await assert_group_level(db, me_id, group.id, AccessLevel.LEVEL1)
     return await group_response(db, me_id, group)
+
+
+@router.get("/groups/{group_id}/people")
+async def get_group_people(
+    group_id: int,
+    db: Database = Depends(db.use),
+    me_id: int = Depends(authorize),
+) -> list[UserView]:
+    """
+    This function returns a list of people in a group by ID.
+    """
+    await assert_group_level(db, me_id, group_id, AccessLevel.LEVEL1)
+    people = (await db.exec(select(User).where(User.group_id == group_id))).all()
+    return [await user_view_from_db(db, me_id, person) for person in people]
 
 
 class CreateGroupRequest(BaseModel):
@@ -117,20 +139,23 @@ async def update_group(
     await db.refresh(group)
     return group
 
+
 @router.post("/groups/{group_id}/interested")
-async def group_interested(group_id: int, db: Database = Depends(db.use), me_id: int = Depends(authorize)) -> GroupRelationship:
+async def group_interested(
+    group_id: int,
+    db: Database = Depends(db.use),
+    me_id: int = Depends(authorize),
+) -> None:
     query = select(GroupRelationship).where(GroupRelationship.group_id == group_id)
     group = (await db.exec(query)).first()
-    print(type(group), group)
     if group is not None and group.level >= AccessLevel.LEVEL1:
-        raise HTTPException(status_code=400, detail="The interested group already is interested")
-        
-    group_relationship = GroupRelationship(user_id=me_id, group_id=group_id, level=AccessLevel.LEVEL1)
+        raise HTTPException(
+            status_code=400, detail="The interested group already is interested"
+        )
+
+    group_relationship = GroupRelationship(
+        user_id=me_id,
+        group_id=group_id,
+        level=AccessLevel.LEVEL1,
+    )
     db.add(group_relationship)
-    await db.commit()
-    await db.refresh(group_relationship)
-    return group_relationship
-    
-    
-        
-    

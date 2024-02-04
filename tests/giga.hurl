@@ -33,6 +33,23 @@ jsonpath "$.user_id" == {{user_id}}
 [Captures]
 token: jsonpath "$.token"
 
+POST http://localhost:5765/api/register
+{
+	"email": "gold@libdb.so",
+	"password": "very weak password",
+	"bio": "",
+	"color": "#f00",
+	"nickname": "gold",
+	"preferred_name": "Gold",
+	"genders": ["woman", "transgender woman"],
+	"pronouns": ["she/her", "it/its"],
+	"sexual_orientations": ["bisexual"]
+}
+HTTP 200
+[Captures]
+another_user_id: jsonpath "$.user_id"
+another_token: jsonpath "$.token"
+
 #
 # Asset handling
 #
@@ -136,6 +153,22 @@ jsonpath "$.people[0].id" == {{user_id}}
 [Captures]
 group_id: jsonpath "$.id"
 
+
+POST http://localhost:5765/api/groups
+Authorization: Bearer {{another_token}}
+{
+	"name": "straight house",
+	"bio": "A house for straight people",
+	"color": "#0f0"
+}
+HTTP 200
+[Asserts]
+jsonpath "$.id" exists
+jsonpath "$.people" count == 1
+jsonpath "$.people[0].id" == {{another_user_id}}
+[Captures]
+another_group_id: jsonpath "$.id"
+
 GET http://localhost:5765/api/groups/{{group_id}}
 Authorization: Bearer {{token}}
 HTTP 200
@@ -171,12 +204,22 @@ jsonpath "$.color" == "#00f"
 # Interested-in-groups testing
 #
 
-POST http://localhost:5765/api/groups/{{group_id}}/interested
+POST http://localhost:5765/api/groups/{{another_group_id}}/interested
+Authorization: Bearer {{token}}
+HTTP 200
+
+POST http://localhost:5765/api/groups/{{another_group_id}}/interested
+Authorization: Bearer {{token}}
+HTTP 400
+[Asserts]
+jsonpath "$.detail" == "The interested group already is interested"
+
+GET http://localhost:5765/api/groups/{{another_group_id}}
 Authorization: Bearer {{token}}
 HTTP 200
 [Asserts]
-jsonpath "$.group_id" == {{group_id}}
-jsonpath "$.level" == 1
+jsonpath "$.access_level" == 1
+jsonpath "$.interested" == true
 
 #
 # Houses testing

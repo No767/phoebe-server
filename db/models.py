@@ -118,8 +118,9 @@ class Group(SQLModel, table=True):
 
     @field_validator("color")
     @classmethod
-    def validate_color(cls, color: str):
+    def validate_color(cls, color: str) -> str:
         colors.assert_valid_color(color)
+        return color
 
 
 class House(SQLModel, table=True):
