@@ -191,6 +191,8 @@ HTTP 200
 jsonpath "$.group.id" == {{group_id}}
 jsonpath "$.group.name" == "gay house"
 
+
+
 PATCH http://localhost:5765/api/groups/{{group_id}}
 Authorization: Bearer {{token}}
 {
@@ -243,4 +245,21 @@ HTTP 200
 [Asserts]
 jsonpath "$" count == 2
 jsonpath "$[0].distance" == 0
-jsonpath "$[1].distance" > 97
+jsonpath "$[1].distance" > 97 
+
+# 
+# Accepting user group requests
+# 
+
+POST http://localhost:5765/api/users/{{another_user_id}}/accept
+Authorization: Bearer {{token}}
+HTTP 200
+[Asserts]
+jsonpath "$.user_id" == {{another_user_id}}
+jsonpath "$.open_dms" == true
+
+POST http://localhost:5765/api/users/{{user_id}}/accept
+Authorization: Bearer {{token}}
+HTTP 404
+[Asserts]
+jsonpath "$.detail" == "Cannot find group to accept"

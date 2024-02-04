@@ -162,3 +162,8 @@ async def group_interested(
         level=AccessLevel.LEVEL1,
     )
     db.add(group_relationship)
+    await db.commit()
+    await db.refresh(group_relationship)
+        
+    
+    

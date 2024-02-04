@@ -150,3 +150,41 @@ async def update_user(
     await db.refresh(user)
 
     return user
+
+# Add the return type later
+# The user id is the other person'd id
+@router.post("/users/{user_id}/accept")
+async def accept_group(user_id: int, db: Database = Depends(db.use),  me_id: int = Depends(authorize)):
+    # Need to update the group id on the user object
+    # First check for the author's group
+    relationship_query = select(GroupRelationship).where(GroupRelationship.user_id == me_id)
+    author = (await db.exec(relationship_query)).first()
+    
+    # Don't look at this code.........
+    if author is not None:
+        if author.level != AccessLevel.LEVEL1:
+            raise HTTPException(status_code=403, detail="Forbidden to access DMs")
+        # I doubt this trips in prod - Noelle
+        elif author.user_id == user_id:
+            raise HTTPException(status_code=400, detail="Already accepted this group!")
+        author.user_id = user_id
+        author.open_dms = True
+        db.add(author)
+        await db.commit()
+        await db.refresh(author)
+        return author
+    
+    raise HTTPException(status_code=404, detail="Cannot find group to accept")
+        
+        
+    
+        
+    
+    
+    # user_query = select(User).where(User.id == user_id).join(GroupRelationship, GroupRelationship.user_id)
+    # user = (await db.exec(user_query)).first()
+    # return user
+    # if user is None:
+
+# @router.delete("/users/delete")
+# async def delete_user()
