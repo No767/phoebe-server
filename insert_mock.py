@@ -18,13 +18,13 @@ import db as database
 import argparse
 from global_land_mask import globe
 
-N_USERS = 50
+N_USERS = 40
 P_USER_WITH_GROUPS = 0.5
 P_USER_WITH_AVATAR = 0.5
 P_GROUP_WITH_HOUSE = 0.5
 
-N_CATS_SQUARE = 50
-N_CATS = 100
+N_CATS_SQUARE = 70
+N_CATS = 70
 
 
 @dataclass
@@ -80,7 +80,7 @@ async def generate_one_user(i: int, db: Database):
     print(f"Generated user with {registration.email=} and {registration.password=}")
 
     if roll(P_USER_WITH_AVATAR):
-        cat_asset = random.choice(fake_cats_square)
+        cat_asset = fake_cats_square[i % len(fake_cats_square)]
         hash = await ensure_asset(cat_asset.data, cat_asset.content_type, db)
         user = (await db.exec(select(User).where(User.id == user_id))).one()
         user.avatar_hash = hash
@@ -104,12 +104,16 @@ async def generate_one_user(i: int, db: Database):
     print(f"Generated {len(photo_hashes)} photo roll for above user")
 
     if roll(P_USER_WITH_GROUPS):
-        await create_group(random_group(), db=db, me_id=user_id)
+        cat_asset = random.choice(fake_cats_square)
+
+        group = random_group()
+        group.icon_hash = await ensure_asset(cat_asset.data, cat_asset.content_type, db)
+
+        await create_group(group, db=db, me_id=user_id)
         print(f"Generated group for above user")
 
 
 def random_group() -> CreateGroupRequest:
-
     def _gen_points(origin_lat: float, origin_lon: float):
         DEV = 0.1  # deviation
 
@@ -187,14 +191,22 @@ async def generate():
         print(f"Got {len(cats)} cats")
 
         async def cat_to_asset(id: str) -> CatAsset:
-            async with http.get(f"https://cataas.com/cat/{id}") as resp:
-                data = await resp.read()
-                content_type = resp.headers["Content-Type"]
-                return CatAsset(data, content_type)
+            while True:
+                async with http.get(f"https://cataas.com/cat/{id}") as resp:
+                    if resp.status != 200:
+                        # probably rate limited, retry in a bit
+                        await asyncio.sleep(0.5)
+                        continue
+
+                    data = await resp.read()
+                    content_type = resp.headers["Content-Type"]
+                    print(f"Downloaded cat {id}")
+                    return CatAsset(data, content_type)
 
         async def cats_to_assets(ids: list[str]) -> list[CatAsset]:
             print(f"Downloading {len(ids)} cats")
-            return await asyncio.gather(*[cat_to_asset(id) for id in ids])
+            # return await asyncio.gather(*[cat_to_asset(id) for id in ids])
+            return [await cat_to_asset(id) for id in ids]
 
         global fake_cats_square
         global fake_cats
@@ -209,12 +221,15 @@ async def generate():
 
 async def list_cat_ids(http: aiohttp.ClientSession, query={}, limit=100) -> list[str]:
     ids: list[str] = []
+    skip = 0
     while len(ids) < limit:
+        query["skip"] = skip
         q = urlencode(query)
         u = f"https://cataas.com/api/cats?{q}"
         async with http.get(u) as resp:
             cats = await resp.json()
             ids.extend([cat["_id"] for cat in cats])
+        skip += len(cats)
     ids = ids[:limit]
     return ids
 
@@ -237,13 +252,13 @@ async def ensure_asset(
 
 
 def roll(p) -> bool:
-    return random.random() < p
+    return random.random() <= p
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--database", type=str, default=":memory:")
-    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--seed", type=int, default=38474)
 
     args = parser.parse_args()
 
