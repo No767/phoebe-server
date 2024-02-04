@@ -3,7 +3,7 @@ from sqlmodel import select, col
 from pydantic import BaseModel, Field
 from db import Database
 from db.models import *
-from sessions import authorize
+from utils.sessions import authorize
 from typing import Sequence, Union
 from api.assets import assert_asset_hash
 import db

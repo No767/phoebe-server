@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from db import Database
 from db.models import *
 from typing import Optional
-from sessions import authorize
+from utils.sessions import authorize
 import io
 import db
 import base64

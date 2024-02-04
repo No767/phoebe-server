@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlmodel import select
-from sessions import authorize, hash_password, verify_password, new_session
+from utils.sessions import authorize, hash_password, verify_password, new_session
 from api.assets import assert_asset_hash
 from db import Database
 from db.models import *

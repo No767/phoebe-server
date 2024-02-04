@@ -4,7 +4,7 @@ from sqlmodel import select
 from haversine import haversine as calculate_distance, Unit as DistanceUnit
 from db import Database
 from db.models import *
-from sessions import authorize
+from utils.sessions import authorize
 import db
 import haversine
 import heapq

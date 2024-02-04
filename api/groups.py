@@ -4,7 +4,7 @@ from sqlmodel import select
 from viewlevels.group import assert_group_level, assert_owns_group, group_level
 from db import Database
 from db.models import *
-from sessions import authorize
+from utils.sessions import authorize
 from viewlevels.user import UserView, user_view_from_db
 import db
 
