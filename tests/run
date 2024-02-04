@@ -2,7 +2,7 @@
 set -eo pipefail
 
 ./main.py --database ":memory:" &
-while ! nc -z localhost 5765 &> /dev/null; do
+while ! curl -s -o /dev/null -w "%{http_code}" http://localhost:5765 &> /dev/null; do
   sleep 0.1
 done
 
