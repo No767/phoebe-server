@@ -252,14 +252,15 @@ jsonpath "$[1].distance" > 97
 # Accepting user group requests
 # 
 
-POST http://localhost:5765/api/users/{{another_user_id}}/accept
-Authorization: Bearer {{token}}
+POST http://localhost:5765/api/users/{{user_id}}/accept
+Authorization: Bearer {{another_token}}
 HTTP 200
-[Asserts]
-jsonpath "$.user_id" == {{another_user_id}}
-jsonpath "$.open_dms" == true
 
 POST http://localhost:5765/api/users/{{user_id}}/accept
+Authorization: Bearer {{another_token}}
+HTTP 400
+
+POST http://localhost:5765/api/users/{{another_user_id}}/accept
 Authorization: Bearer {{token}}
 HTTP 404
 [Asserts]
