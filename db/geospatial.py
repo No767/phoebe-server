@@ -5,13 +5,15 @@ from haversine import haversine as calculate_distance
 import haversine
 import heapq
 
+Unit = haversine.Unit
+
 
 async def search_nearest_houses(
     db: Database,
     lat: float,
     lon: float,
     radius: float,  # in whatever unit the `unit` parameter is
-    unit=haversine.Unit.MILES,
+    unit=Unit.MILES,
     limit=100,
 ) -> list[House]:
     heap = []

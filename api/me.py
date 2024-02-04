@@ -84,15 +84,41 @@ async def register(
     return new_session(db, user.id)
 
 
+class UserResponse(BaseModel):
+    id: int = Field(default_factory=generate_id, primary_key=True)
+    email: str
+    bio: str
+    color: str
+    avatar_hash: Optional[str]
+    preferred_name: str
+    nickname: str
+    genders: list[str]
+    pronouns: list[str]
+    sexual_orientations: list[str]
+    group: Optional[Group]
+    house: Optional[House]
+
+
 @router.get("/users/me")
 async def get_self(
     db: Database = Depends(db.use),
     me_id: int = Depends(authorize),
-) -> User:
+) -> UserResponse:
     """
     This function returns the currently authenticated user.
     """
-    return (await db.exec(select(User).where(User.id == me_id))).one()
+    user = (await db.exec(select(User).where(User.id == me_id))).one()
+    group = None
+    house = None
+
+    if user.group_id is not None:
+        group = (await db.exec(select(Group).where(Group.id == user.group_id))).one()
+        if group.house_id is not None:
+            house = (
+                await db.exec(select(House).where(House.id == group.house_id))
+            ).one()
+
+    return UserResponse(**user.model_dump(), group=group, house=house)
 
 
 @router.patch("/users/me")
@@ -130,7 +156,3 @@ async def update_user(
     await db.refresh(user)
 
     return user
-
-
-# @router.delete("/users/delete")
-# async def delete_user()

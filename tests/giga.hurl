@@ -75,7 +75,8 @@ jsonpath "$.id" == {{user_id}}
 jsonpath "$.email" == "diamond@libdb.so"
 jsonpath "$.nickname" == "silver"
 jsonpath "$.bio" == ""
-jsonpath "$.group_id" == null
+jsonpath "$.house" == null
+jsonpath "$.group" == null
 
 PATCH http://localhost:5765/api/users/me
 Authorization: Bearer {{token}}
@@ -149,7 +150,8 @@ GET http://localhost:5765/api/users/me
 Authorization: Bearer {{token}}
 HTTP 200
 [Asserts]
-jsonpath "$.group_id" == {{group_id}}
+jsonpath "$.group.id" == {{group_id}}
+jsonpath "$.group.name" == "gay house"
 
 PATCH http://localhost:5765/api/groups/{{group_id}}
 Authorization: Bearer {{token}}
@@ -165,9 +167,64 @@ jsonpath "$.name" == "gayer house"
 jsonpath "$.bio" == "A house for gayer people"
 jsonpath "$.color" == "#00f"
 
+#
+# Interested-in-groups testing
+#
+
 POST http://localhost:5765/api/groups/{{group_id}}/interested
 Authorization: Bearer {{token}}
 HTTP 200
 [Asserts]
 jsonpath "$.group_id" == {{group_id}}
 jsonpath "$.level" == 1
+
+#
+# Houses testing
+#
+
+POST http://localhost:5765/api/houses
+Authorization: Bearer {{token}}
+{
+	"lat": -4.123,
+	"lon": 1.194,
+	"description": "A house for gay people"
+}
+HTTP 200
+[Asserts]
+jsonpath "$.id" exists
+jsonpath "$.lat" == -4.123
+jsonpath "$.lon" == 1.194
+jsonpath "$.description" == "A house for gay people"
+[Captures]
+house_id: jsonpath "$.id"
+
+PATCH http://localhost:5765/api/houses/{{house_id}}
+Authorization: Bearer {{token}}
+{
+	"lat": -4.123,
+	"lon": 1.194,
+	"description": "A house for gayer people"
+}
+HTTP 200
+[Asserts]
+jsonpath "$.id" == {{house_id}}
+jsonpath "$.lat" == -4.123
+jsonpath "$.lon" == 1.194
+jsonpath "$.description" == "A house for gayer people"
+
+GET http://localhost:5765/api/users/me
+Authorization: Bearer {{token}}
+HTTP 200
+[Asserts]
+jsonpath "$.house.id" == {{house_id}}
+jsonpath "$.house.description" == "A house for gayer people"
+
+DELETE http://localhost:5765/api/houses/{{house_id}}
+Authorization: Bearer {{token}}
+HTTP 200
+
+GET http://localhost:5765/api/users/me
+Authorization: Bearer {{token}}
+HTTP 200
+[Asserts]
+jsonpath "$.house" == null
