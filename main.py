@@ -7,15 +7,18 @@ import api
 import uvicorn
 import argparse
 from fastapi_pagination import add_pagination
+from api import chat
 
 
 @asynccontextmanager
-async def with_init_db(_: FastAPI):
+async def with_init(_: FastAPI):
     await db.init_db()
+    await chat.broadcast.connect()
     yield
+    await chat.broadcast.disconnect()
 
 
-app = FastAPI(lifespan=with_init_db)
+app = FastAPI(lifespan=with_init)
 app.include_router(api.router)
 
 

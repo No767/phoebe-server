@@ -95,6 +95,22 @@ jupyter = ["ipython (>=7.8.0)", "tokenize-rt (>=3.2.0)"]
 uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
+name = "broadcaster"
+version = "0.2.0"
+description = "Simple broadcast channels."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "broadcaster-0.2.0-py3-none-any.whl", hash = "sha256:50f93d1af7e9097a87ef3b2da269b4b4c5630ec080dc5c7f941ef314291937b1"},
+    {file = "broadcaster-0.2.0.tar.gz", hash = "sha256:72056f9b77b091dd4bbad4d7484bd0e6835c3443d4564d0bbf41190c29c606c6"},
+]
+
+[package.extras]
+kafka = ["aiokafka"]
+postgres = ["asyncpg"]
+redis = ["asyncio-redis"]
+
+[[package]]
 name = "click"
 version = "8.1.7"
 description = "Composable command line interface toolkit"
@@ -811,6 +827,25 @@ pydantic = ">=1.10.13,<3.0.0"
 SQLAlchemy = ">=2.0.0,<2.1.0"
 
 [[package]]
+name = "sse-starlette"
+version = "2.0.0"
+description = "SSE plugin for Starlette"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "sse_starlette-2.0.0-py3-none-any.whl", hash = "sha256:c4dd134302cb9708d47cae23c365fe0a089aa2a875d2f887ac80f235a9ee5744"},
+    {file = "sse_starlette-2.0.0.tar.gz", hash = "sha256:0c43cc43aca4884c88c8416b65777c4de874cc4773e6458d3579c0a353dc2fb7"},
+]
+
+[package.dependencies]
+anyio = "*"
+starlette = "*"
+uvicorn = "*"
+
+[package.extras]
+examples = ["fastapi"]
+
+[[package]]
 name = "starlette"
 version = "0.35.1"
 description = "The little ASGI library that shines."
@@ -1083,4 +1118,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "c803d29601e41d3fb04ee3e6970992471aa4c0ac0cbe3b7a1fdd892c42f8a2e3"
+content-hash = "2509dbb01f405b2ee449f5e8a63600fc50afb7995fee2a5b288d6565614416d1"

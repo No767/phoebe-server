@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, WebSocket
 from sqlmodel import select, col
 from pydantic import BaseModel, Field
 from db import Database
@@ -9,9 +9,12 @@ from api.assets import assert_asset_hash
 import db
 from viewlevels.group import assert_group_open_dms, group_level
 from viewlevels.user import UserView, user_view
-
+from sse_starlette.sse import EventSourceResponse, AsyncContentStream
+from broadcaster import Broadcast
+import asyncio
 router = APIRouter(tags=["chat"])
 
+broadcast = Broadcast("memory://")
 
 @router.get("/chat/groups")
 async def get_chat_groups(
@@ -102,6 +105,8 @@ async def send_chat_message(
     if isinstance(req.content, ChatContentImage):
         await assert_asset_hash(db, req.content.asset_hash)
 
+
+    await broadcast.publish(channel=str(group_id), message=req.content)
     message = ChatMessage(
         group_id=group_id,
         author_id=me_id,
@@ -119,6 +124,19 @@ async def send_chat_message(
         author=user_view(me, AccessLevel.HIGHEST),
     )
 
+@router.get("/chat/groups/{group_id}/messages/live")
+async def live_chat_messages(
+    group_id: int,
+    db: Database = Depends(db.use),
+    me_id: int = Depends(authorize),
+) -> EventSourceResponse:
+    async def ws_messages():
+        async with broadcast.subscribe(channel=str(group_id)) as subscriber:
+            async for event in subscriber:
+                yield event
+    
+    await assert_group_open_dms(db, me_id, group_id)    
+    return EventSourceResponse(ws_messages())
 
 async def assert_asset_hash(db: Database, hash: str):
     asset = (await db.exec(select(Asset.hash).where(Asset.hash == hash))).first()
