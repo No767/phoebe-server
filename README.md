@@ -1,43 +1,46 @@
-# py-rest-template
+# phoebe-server
 
-A Python RESTful FastAPI template with SQLite database and session handling.
+The backend server for Phoebe, a platform for queer housing.
 
-## Features
+## About Phoebe
 
-- Uses [FastAPI](https://fastapi.tiangolo.com/) for the API
-- Uses [Pydantic](https://pydantic-docs.helpmanual.io/) for data validation
-- Uses [SQLModel](https://sqlmodel.tiangolo.com/) for database models and
-  migrations
-- Uses [SQLite](https://www.sqlite.org/index.html) for the database
-- Prioritizes asynchronous code for better performance (with `aiosqlite`)
-- Contains a basic user authentication system with login and registration
-    - Includes password hashing with PBKDF2 using `hashlib`
-- Contains [hurl](https://hurl.dev) tests for the API (in `tests/`)
+In light of safety amongst the LGBTQ+ community, many queer people face
+difficulties and risk homelessness due to their identity. Acknowledging the
+uphill battle, Phoebe was inspired to provide a platform where queer people can
+search for safe alternatives provided by other queer folks.
 
-## Usage
+Phoebe aims to match queer people with other queer folks who are struggling or
+will struggle to find a place to live because of their queerness (e.g. being
+transgender). It is often far more comfortable for queer people to live
+together than living with those who may pose a risk. In addition, Phoebe also
+accounts for polyamory relationships and offers the ability to seek housing in
+groups.
 
-It is recommended to use Nix with Flakes for development. If you have Nix
-installed, you can simply run `nix develop` to enter a development environment
-with all the necessary dependencies.
+You can see our [DevPost](https://devpost.com/software/phoebe-izav85) for more
+information!
 
-Once you have the development environment set up, you can run the following
-commands:
+## Development
 
-```sh
-# Install the project dependencies
-pip install -r requirements.txt
+This project uses Nix for development. If you have Nix installed, you can simply
+run `nix develop` to enter a development environment with all the necessary
+dependencies.
 
-# Run the server
-./main.py
-```
+Otherwise, you may use Poetry to set up your development environment.
 
-You may also choose to run the server with `uvicorn` for hot-reloading:
+Then, you can run the following commands:
 
 ```sh
-uvicorn main:app --reload
+./main.py --database :memory: --port 5469
 ```
 
-## License
+## Testing
 
-This project is licensed under the terms of the ISC license. See the
-[LICENSE](LICENSE) file for details.
+The backend comes with integration tests using `hurl`. You can run the tests
+with the following command:
+
+```sh
+./tests/run
+```
+
+Note that `hurl` is installed in the Nix development environment, so you will
+not need to install it separately.
