@@ -16,6 +16,7 @@ import uvloop
 import asyncio
 import db as database
 import argparse
+from global_land_mask import globe
 
 N_USERS = 50
 P_USER_WITH_GROUPS = 0.5
@@ -30,6 +31,8 @@ N_CATS = 100
 class CatAsset:
     data: bytes
     content_type: str
+    
+
 
 
 fake = Faker()
@@ -106,7 +109,21 @@ async def generate_one_user(i: int, db: Database):
 
 
 def random_group() -> CreateGroupRequest:
-    lat, lon = fake.latlng()
+    
+    def _gen_points(origin_lat: float, origin_lon: float):
+        DEV = 0.1 # deviation
+
+        lat = origin_lat + random.uniform(-DEV, +DEV)
+        lon = origin_lon + random.uniform(-DEV, +DEV)
+        return (lat, lon)
+    
+    # UCLA Powell Library
+    lat, lon = _gen_points(34.07181475768593, -118.44212446579002)
+    
+    while not globe.is_land(lat, lon):
+        lat, lon = _gen_points(lat, lon)
+    
+    
     return CreateGroupRequest(
         name=" ".join(fake.words(nb=2)),
         bio=fake.sentence(),
