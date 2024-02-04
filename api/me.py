@@ -47,8 +47,7 @@ class RegisterRequest(BaseModel):
 
     bio: str
     color: str
-    avatar_hash: Optional[str] = None
-    nickname: Optional[str] = None
+    nickname: str
     preferred_name: str
     genders: list[str]
     pronouns: list[str]
@@ -64,12 +63,6 @@ async def register(
     This function registers a new user and returns a session token.
     """
 
-    if req.avatar_hash is not None:
-        await assert_asset_hash(db, req.avatar_hash)
-
-    if req.nickname is None:
-        req.nickname = req.preferred_name
-
     async with db.begin_nested():
         user = User(**req.model_dump())
         db.add(user)
@@ -84,7 +77,7 @@ async def register(
     return new_session(db, user.id)
 
 
-class UserResponse(BaseModel):
+class MeResponse(BaseModel):
     id: int = Field(default_factory=generate_id, primary_key=True)
     email: str
     bio: str
@@ -102,7 +95,7 @@ class UserResponse(BaseModel):
 async def get_self(
     db: Database = Depends(db.use),
     me_id: int = Depends(authorize),
-) -> UserResponse:
+) -> MeResponse:
     """
     This function returns the currently authenticated user.
     """
@@ -112,18 +105,27 @@ async def get_self(
     if user.group_id is not None:
         group = (await db.exec(select(Group).where(Group.id == user.group_id))).one()
 
-    return UserResponse(**user.model_dump(), group=group)
+    return MeResponse(**user.model_dump(), group=group)
+
+
+class UpdateUserRequest(RegisterRequest):
+    avatar_hash: Optional[str] = None
+    photo_hashes: list[str] = []
 
 
 @router.patch("/users/me")
 async def update_user(
-    req: RegisterRequest,
+    req: UpdateUserRequest,
     me_id: int = Depends(authorize),
     db: Database = Depends(db.use),
 ) -> User:
     """
     Updates the specified authenticated user
     """
+
+    if req.avatar_hash is not None:
+        await assert_asset_hash(db, req.avatar_hash)
+
     user = (await db.exec(select(User).where(User.id == me_id))).one()
     password = (
         await db.exec(select(UserPassword).where(UserPassword.id == me_id))
@@ -143,6 +145,23 @@ async def update_user(
             case _:
                 setattr(user, key, value)
 
+    new_photos = req.photo_hashes.copy()
+    old_photos = (
+        await db.exec(select(UserPhotos).where(UserPhotos.user_id == me_id))
+    ).all()
+
+    for photo in old_photos:
+        if photo.photo_hash not in req.photo_hashes:
+            # Old photo is not in new photos, delete it.
+            await db.delete(photo)
+        else:
+            # Old photo is in new photos, remove it from new photos.
+            new_photos.remove(photo.photo_hash)
+
+    # Add the new photos.
+    for photo in new_photos:
+        db.add(UserPhotos(user_id=me_id, photo_hash=photo))
+
     db.add(user)
     db.add(password)
 
@@ -150,37 +169,3 @@ async def update_user(
     await db.refresh(user)
 
     return user
-
-
-# The user id is the other person'd id
-@router.post("/users/{user_id}/accept")
-async def accept_group(
-    user_id: int,
-    db: Database = Depends(db.use),
-    me_id: int = Depends(authorize),
-) -> None:
-    # Need to update the group id on the user object
-    # First check for the author's group
-    relationship_query = (
-        select(GroupRelationship)
-        .join(User)
-        .where(
-            GroupRelationship.user_id == user_id
-            and User.id == me_id
-            and User.group_id == GroupRelationship.group_id
-        )
-    )
-    relationship = (await db.exec(relationship_query)).first()
-    # Don't look at this code.........
-    if relationship is None:
-        raise HTTPException(status_code=404, detail="Cannot find group to accept")
-
-    if relationship.level < AccessLevel.LEVEL1:
-        raise HTTPException(status_code=403, detail="Forbidden to access DMs")
-
-    if relationship.open_dms:
-        raise HTTPException(status_code=400, detail="Already accepted this group!")
-
-    relationship.user_id = user_id
-    relationship.open_dms = True
-    db.add(relationship)
