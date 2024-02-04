@@ -31,8 +31,6 @@ N_CATS = 100
 class CatAsset:
     data: bytes
     content_type: str
-    
-
 
 
 fake = Faker()
@@ -90,9 +88,11 @@ async def generate_one_user(i: int, db: Database):
         await db.commit()
         print(f"Generated avatar for above user")
 
+    photo_attempts = 0
     photo_hashes: set[str] = set()
     n_photos_wanted = random.randint(0, 11)
-    while len(photo_hashes) < n_photos_wanted:
+    while len(photo_hashes) < n_photos_wanted and photo_attempts < 1000:
+        photo_attempts += 1
         cat_asset = random.choice(fake_cats)
         photo_hash = await ensure_asset(cat_asset.data, cat_asset.content_type, db)
         if photo_hash in photo_hashes:
@@ -109,21 +109,20 @@ async def generate_one_user(i: int, db: Database):
 
 
 def random_group() -> CreateGroupRequest:
-    
+
     def _gen_points(origin_lat: float, origin_lon: float):
-        DEV = 0.1 # deviation
+        DEV = 0.1  # deviation
 
         lat = origin_lat + random.uniform(-DEV, +DEV)
         lon = origin_lon + random.uniform(-DEV, +DEV)
         return (lat, lon)
-    
+
     # UCLA Powell Library
     lat, lon = _gen_points(34.07181475768593, -118.44212446579002)
-    
+
     while not globe.is_land(lat, lon):
         lat, lon = _gen_points(lat, lon)
-    
-    
+
     return CreateGroupRequest(
         name=" ".join(fake.words(nb=2)),
         bio=fake.sentence(),

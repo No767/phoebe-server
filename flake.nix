@@ -39,6 +39,7 @@
 							broadcaster = fixPoetryPackage super.broadcaster;
 							sonyflake-py = fixPoetryPackage super.sonyflake-py;
 							sse-starlette = fixPoetryPackage super.sse-starlette;
+							global-land-mask = fixPoetryPackage super.global-land-mask;
 							fastapi-pagination = fixPoetryPackage super.fastapi-pagination;
 							sphinxcontrib-jquery = super.sphinxcontrib-jquery.overridePythonAttrs (old: {
 								buildInputs = (old.buildInputs or [ ]) ++ (with super; [
