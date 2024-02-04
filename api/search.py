@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Annotated, AsyncGenerator, Optional
-from fastapi import APIRouter, Depends, Form, HTTPException
+from fastapi import APIRouter, Depends, Form, HTTPException, Query
 from sqlmodel import select
 from haversine import haversine as calculate_distance, Unit as DistanceUnit
 from api.groups import GroupResponse, group_response
@@ -20,12 +20,12 @@ class SearchedGroup(GroupResponse):
 
 @dataclass
 class SearchParams:
-    lat: float = Form(description="Latitude of the search point")
-    lon: float = Form(description="Longitude of the search point")
-    radius: float = Form(description="Radius of the search in the given unit")
-    has_house: Optional[bool] = Form(None, description="Whether the group has a house")
-    limit: int = Form(100, description="Maximum number of groups to return")
-    unit: DistanceUnit = Form(
+    lat: float = Query(description="Latitude of the search point")
+    lon: float = Query(description="Longitude of the search point")
+    radius: float = Query(description="Radius of the search in the given unit")
+    has_house: Optional[bool] = Query(None, description="Whether the group has a house")
+    limit: int = Query(100, description="Maximum number of groups to return")
+    unit: DistanceUnit = Query(
         default=DistanceUnit.MILES,
         description="Unit of the radius",
     )

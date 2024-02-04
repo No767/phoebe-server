@@ -27,7 +27,7 @@ class GroupResponse(BaseModel):
 
 async def group_response(db: Database, me_id: int, group: Group) -> GroupResponse:
     people = (await db.exec(select(User).where(User.group_id == group.id))).all()
-    people = [await user_view_from_db(db, me_id, person) for person in people]
+    people = [await user_view_from_db(db, me_id, person.id) for person in people]
     level = await group_level(db, me_id, group.id)
     return GroupResponse(
         **group.model_dump(),
@@ -68,7 +68,7 @@ async def get_group_people(
     """
     await assert_group_level(db, me_id, group_id, AccessLevel.LEVEL1)
     people = (await db.exec(select(User).where(User.group_id == group_id))).all()
-    return [await user_view_from_db(db, me_id, person) for person in people]
+    return [await user_view_from_db(db, me_id, person.id) for person in people]
 
 
 class CreateGroupRequest(BaseModel):
@@ -157,6 +157,10 @@ async def group_interested(
     db: Database = Depends(db.use),
     me_id: int = Depends(authorize),
 ) -> None:
+    """
+    Express interest in a group. This escalates the user's access level to level
+    1.
+    """
     query = select(GroupRelationship).where(GroupRelationship.group_id == group_id)
     group = (await db.exec(query)).first()
     if group is not None and group.level >= AccessLevel.LEVEL1:
@@ -170,5 +174,35 @@ async def group_interested(
         level=AccessLevel.LEVEL1,
     )
     db.add(group_relationship)
-    await db.commit()
-    await db.refresh(group_relationship)
+
+
+@router.post("/groups/{group_id}/trust")
+async def group_trust(
+    group_id: int,
+    db: Database = Depends(db.use),
+    me_id: int = Depends(authorize),
+) -> None:
+    """
+    Trust a group. This escalates the user's access level to level 2.
+    This is only allowed if the user's level is 1 and they have open DMs.
+    """
+    await assert_group_level(db, me_id, group_id, AccessLevel.LEVEL1)
+
+    relationship = (
+        await db.exec(
+            select(GroupRelationship).where(GroupRelationship.group_id == group_id)
+        )
+    ).first()
+    if relationship is None or relationship.level < AccessLevel.LEVEL1:
+        raise HTTPException(
+            status_code=400,
+            detail="You cannot trust a group that you are not interested in.",
+        )
+    if not relationship.open_dms:
+        raise HTTPException(
+            status_code=400,
+            detail="You cannot trust a group without already having open DMs.",
+        )
+
+    relationship.level = AccessLevel.LEVEL2
+    db.add(relationship)

@@ -29,7 +29,7 @@ async def get_user(
     await assert_group_level(db, user_id, me.group_id, AccessLevel.LEVEL1)
 
     user = (await db.exec(select(User).where(User.id == user_id))).one()
-    return await user_view_from_db(db, me_id, user)
+    return await user_view_from_db(db, me_id, user.id)
 
 
 # The user id is the other person'd id

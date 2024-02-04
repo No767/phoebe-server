@@ -142,6 +142,8 @@ async def update_user(
                 if value is not None:
                     await assert_asset_hash(db, value)
                 setattr(user, key, value)
+            case "photo_hashes":
+                pass  # handled later
             case _:
                 setattr(user, key, value)
 
