@@ -11,8 +11,16 @@ import db
 router = APIRouter(tags=["groups"])
 
 
-class GroupResponse(Group):
-    people: list[UserView] = Field(sa_column=Column(JSON))
+class GroupResponse(BaseModel):
+    id: int
+    name: str
+    bio: str
+    color: str
+    icon_hash: Optional[str]
+    lat: float
+    lon: float
+    has_house: bool
+    people: list[UserView]
     interested: bool
     access_level: AccessLevel
 
@@ -164,6 +172,3 @@ async def group_interested(
     db.add(group_relationship)
     await db.commit()
     await db.refresh(group_relationship)
-        
-    
-    
