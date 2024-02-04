@@ -92,7 +92,6 @@ jsonpath "$.id" == {{user_id}}
 jsonpath "$.email" == "diamond@libdb.so"
 jsonpath "$.nickname" == "silver"
 jsonpath "$.bio" == ""
-jsonpath "$.house" == null
 jsonpath "$.group" == null
 
 PATCH http://localhost:5765/api/users/me
@@ -143,7 +142,10 @@ Authorization: Bearer {{token}}
 {
 	"name": "gay house",
 	"bio": "A house for gay people",
-	"color": "#f00"
+	"color": "#f00",
+	"lat": -5.122,
+	"lon": 2.193,
+	"has_house": true
 }
 HTTP 200
 [Asserts]
@@ -159,7 +161,10 @@ Authorization: Bearer {{another_token}}
 {
 	"name": "straight house",
 	"bio": "A house for straight people",
-	"color": "#0f0"
+	"color": "#0f0",
+	"lat": -4.122,
+	"lon": 1.193,
+	"has_house": true
 }
 HTTP 200
 [Asserts]
@@ -191,7 +196,10 @@ Authorization: Bearer {{token}}
 {
 	"name": "gayer house",
 	"bio": "A house for gayer people",
-	"color": "#00f"
+	"color": "#00f",
+	"lat": -5.122,
+	"lon": 2.193,
+	"has_house": true
 }
 HTTP 200
 [Asserts]
@@ -222,52 +230,17 @@ jsonpath "$.access_level" == 1
 jsonpath "$.interested" == true
 
 #
-# Houses testing
+# Searching
 #
 
-POST http://localhost:5765/api/houses
-Authorization: Bearer {{token}}
-{
-	"lat": -4.123,
-	"lon": 1.194,
-	"description": "A house for gay people"
-}
+GET http://localhost:5765/api/search
+[QueryStringParams]
+lat: -4.122
+lon: 1.193
+radius: 100
+unit: mi
 HTTP 200
 [Asserts]
-jsonpath "$.id" exists
-jsonpath "$.lat" == -4.123
-jsonpath "$.lon" == 1.194
-jsonpath "$.description" == "A house for gay people"
-[Captures]
-house_id: jsonpath "$.id"
-
-PATCH http://localhost:5765/api/houses/{{house_id}}
-Authorization: Bearer {{token}}
-{
-	"lat": -4.123,
-	"lon": 1.194,
-	"description": "A house for gayer people"
-}
-HTTP 200
-[Asserts]
-jsonpath "$.id" == {{house_id}}
-jsonpath "$.lat" == -4.123
-jsonpath "$.lon" == 1.194
-jsonpath "$.description" == "A house for gayer people"
-
-GET http://localhost:5765/api/users/me
-Authorization: Bearer {{token}}
-HTTP 200
-[Asserts]
-jsonpath "$.house.id" == {{house_id}}
-jsonpath "$.house.description" == "A house for gayer people"
-
-DELETE http://localhost:5765/api/houses/{{house_id}}
-Authorization: Bearer {{token}}
-HTTP 200
-
-GET http://localhost:5765/api/users/me
-Authorization: Bearer {{token}}
-HTTP 200
-[Asserts]
-jsonpath "$.house" == null
+jsonpath "$" count == 2
+jsonpath "$[0].distance" == 0
+jsonpath "$[1].distance" > 97

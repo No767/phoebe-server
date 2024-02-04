@@ -68,6 +68,9 @@ class CreateGroupRequest(BaseModel):
     bio: str
     color: str
     icon_hash: Optional[str] = None
+    lat: float
+    lon: float
+    has_house: bool = False
 
 
 @router.post("/groups")

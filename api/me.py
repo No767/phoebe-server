@@ -96,7 +96,6 @@ class UserResponse(BaseModel):
     pronouns: list[str]
     sexual_orientations: list[str]
     group: Optional[Group]
-    house: Optional[House]
 
 
 @router.get("/users/me")
@@ -109,16 +108,11 @@ async def get_self(
     """
     user = (await db.exec(select(User).where(User.id == me_id))).one()
     group = None
-    house = None
 
     if user.group_id is not None:
         group = (await db.exec(select(Group).where(Group.id == user.group_id))).one()
-        if group.house_id is not None:
-            house = (
-                await db.exec(select(House).where(House.id == group.house_id))
-            ).one()
 
-    return UserResponse(**user.model_dump(), group=group, house=house)
+    return UserResponse(**user.model_dump(), group=group)
 
 
 @router.patch("/users/me")

@@ -114,25 +114,16 @@ class Group(SQLModel, table=True):
     bio: str
     color: str
     icon_hash: Optional[str] = Field(default=None, foreign_key="asset.hash")
-    house_id: Optional[int] = Field(default=None, foreign_key="house.id")
+
+    lat: float
+    lon: float
+    has_house: bool = Field(default=False)
 
     @field_validator("color")
     @classmethod
     def validate_color(cls, color: str) -> str:
         colors.assert_valid_color(color)
         return color
-
-
-class House(SQLModel, table=True):
-    """
-    A house describes a living space for a group.
-    Its location is roughly accurate to the nearest city.
-    """
-
-    id: int = Field(default_factory=generate_id, primary_key=True)
-    lat: float
-    lon: float
-    description: str
 
 
 class Asset(SQLModel, table=True):
