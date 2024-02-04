@@ -75,7 +75,7 @@ class UploadFileResponse(BaseModel):
 @router.post("/assets")
 async def upload_asset(
     file: UploadFile,
-    alt: Optional[str] = Form(),
+    alt: Optional[str] = Form(default=None),
     db: Database = Depends(db.use),
     me: str = Depends(authorize),
 ) -> UploadFileResponse:
