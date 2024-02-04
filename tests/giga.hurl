@@ -236,6 +236,7 @@ jsonpath "$.interested" == true
 #
 
 GET http://localhost:5765/api/search
+Authorization: Bearer {{token}}
 [QueryStringParams]
 lat: -4.122
 lon: 1.193
@@ -263,3 +264,35 @@ Authorization: Bearer {{token}}
 HTTP 404
 [Asserts]
 jsonpath "$.detail" == "Cannot find group to accept"
+
+#
+# Chatting
+#
+
+GET http://localhost:5765/api/chat/groups
+Authorization: Bearer {{token}}
+HTTP 200
+[Asserts]
+jsonpath "$" count == 1
+jsonpath "$[0].id" == {{another_group_id}}
+
+GET http://localhost:5765/api/chat/groups/{{another_group_id}}/messages
+Authorization: Bearer {{token}}
+HTTP 200
+[Asserts]
+jsonpath "$" count == 0
+
+POST http://localhost:5765/api/chat/groups/{{another_group_id}}/messages
+Authorization: Bearer {{token}}
+{
+	"content": {
+		"type": "text",
+		"markdown": "Hello, I'm Diamond!"
+	}
+}
+HTTP 200
+[Asserts]
+jsonpath "$.id" exists
+jsonpath "$.content" == "Hello, I'm Diamond!"
+jsonpath "$.sender.id" == {{user_id}}
+jsonpath "$.sender_id" == {{user_id}}

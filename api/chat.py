@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import select
+from sqlmodel import select, col
 from pydantic import BaseModel, Field
 from db import Database
 from db.models import *
 from sessions import authorize
-from typing import Union
+from typing import Sequence, Union
 from api.assets import assert_asset_hash
 import db
+from viewlevels.group import assert_group_open_dms, group_level
+from viewlevels.user import UserView, user_view
 
 router = APIRouter(tags=["chat"])
 
@@ -14,51 +16,108 @@ router = APIRouter(tags=["chat"])
 @router.get("/chat/groups")
 async def get_chat_groups(
     db: Database = Depends(db.use),
-    me: str = Depends(authorize),
-) -> list[Group]:
+    me_id: int = Depends(authorize),
+) -> Sequence[Group]:
     """
     This function returns chat groups that the current user currently has an
     open DM with.
     """
-    raise HTTPException(status_code=501, detail="Not implemented")
+    return (
+        await db.exec(
+            select(Group)
+            .join(GroupRelationship)
+            .where(
+                GroupRelationship.user_id == me_id
+                and GroupRelationship.open_dms == True
+            )
+        )
+    ).all()
 
 
-@router.get("/chat/messages/{group_id}")
+class ChatMessageResponse(BaseModel):
+    id: int
+    group_id: int
+    author_id: int
+    author: UserView
+    content: ChatContent
+
+
+@router.get("/chat/groups/{group_id}/messages")
 async def get_chat_messages(
     group_id: int,
+    before_id: Optional[int] = None,
+    limit: int = 50,
     db: Database = Depends(db.use),
-    me: str = Depends(authorize),
-) -> list[ChatMessage]:
+    me_id: int = Depends(authorize),
+) -> Sequence[ChatMessageResponse]:
     """
     This function returns chat messages for a group that the current user is in.
     """
-    # TODO: assert that the user is either in a GroupRelationship with open_dms
-    # true or they belong in their group.
-    raise HTTPException(status_code=501, detail="Not implemented")
+    assert assert_group_open_dms(db, me_id, group_id)
+
+    if limit > 100:
+        limit = 100
+
+    messages_with_author = (
+        await db.exec(
+            select(ChatMessage, User)
+            .join(User)
+            .where(
+                ChatMessage.group_id == group_id
+                and User.id == ChatMessage.author_id
+                and (ChatMessage.id < before_id if before_id is not None else True)
+            )
+            .order_by(col(ChatMessage.id).desc())
+            .limit(limit)
+        )
+    ).all()
+    level = await group_level(db, me_id, group_id)
+    return [
+        ChatMessageResponse(
+            **message.model_dump(),
+            author=user_view(user, level),
+        )
+        for message, user in messages_with_author
+    ]
 
 
 class SendChatMessageRequest(BaseModel):
-    content: Union[ChatContentText, ChatContentSticker, ChatContentImage] = Field(
-        discriminator="type"
-    )
+    content: ChatContent
 
 
-@router.post("/chat/messages/{group_id}")
+@router.post("/chat/groups/{group_id}/messages")
 async def send_chat_message(
     group_id: int,
     req: SendChatMessageRequest,
     db: Database = Depends(db.use),
-    me: str = Depends(authorize),
-) -> ChatMessage:
+    me_id: int = Depends(authorize),
+) -> ChatMessageResponse:
     """
     This function sends a chat message to a group.
     """
+    await assert_group_open_dms(db, me_id, group_id)
+
     if isinstance(req.content, ChatContentSticker):
         await assert_asset_hash(db, req.content.asset_hash)
     if isinstance(req.content, ChatContentImage):
         await assert_asset_hash(db, req.content.asset_hash)
 
-    raise HTTPException(status_code=501, detail="Not implemented")
+    message = ChatMessage(
+        group_id=group_id,
+        author_id=me_id,
+        content=req.content,
+    )
+
+    db.add(message)
+    await db.commit()
+    await db.refresh(message)
+
+    me = (await db.exec(select(User).where(User.id == me_id))).one()
+    return ChatMessageResponse(
+        **message.model_dump(),
+        # Assume HIGHEST because the sender is US!!
+        author=user_view(me, AccessLevel.HIGHEST),
+    )
 
 
 async def assert_asset_hash(db: Database, hash: str):

@@ -77,7 +77,7 @@ async def upload_asset(
     file: UploadFile,
     alt: Optional[str] = Form(default=None),
     db: Database = Depends(db.use),
-    me: str = Depends(authorize),
+    _=Depends(authorize),
 ) -> UploadFileResponse:
     """
     Uploads an asset and returns its hash.

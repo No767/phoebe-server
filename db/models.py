@@ -6,7 +6,7 @@ from sqlmodel import (
 )
 from pydantic import BaseModel, field_validator
 from datetime import datetime
-from typing import Optional, Literal, Union
+from typing import Annotated, Optional, Literal, Union
 from enum import Enum
 from utils import colors
 from db.id import generate_id
@@ -167,6 +167,12 @@ class ChatContentImage(BaseModel):
     asset_hash: str
 
 
+ChatContent = Annotated[
+    Union[ChatContentText, ChatContentSticker, ChatContentImage],
+    Field(discriminator="type", sa_column=Column(JSON)),
+]
+
+
 class ChatMessage(SQLModel, table=True):
     # id is the unique identifier for the message.
     # It is defined as a Snowflake ID and therefore also contains a timestamp.
@@ -181,7 +187,4 @@ class ChatMessage(SQLModel, table=True):
     author_id: int | None = Field(foreign_key="user.id")
 
     # content is the message content.
-    content: Union[ChatContentText, ChatContentSticker, ChatContentImage] = Field(
-        discriminator="type",
-        sa_column=Column(JSON),
-    )
+    content: ChatContent

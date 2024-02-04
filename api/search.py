@@ -4,6 +4,7 @@ from sqlmodel import select
 from haversine import haversine as calculate_distance, Unit as DistanceUnit
 from db import Database
 from db.models import *
+from sessions import authorize
 import db
 import haversine
 import heapq
@@ -23,6 +24,7 @@ async def search_nearest_groups(
     radius: Annotated[float, "Radius of the search in the given unit"],
     unit=DistanceUnit.MILES,
     limit=100,
+    _: int = Depends(authorize),
 ) -> list[SearchedGroup]:
     group_distances = [
         group

@@ -84,3 +84,39 @@ async def assert_group_level(
             status_code=403,
             detail="You do not have the required access level for this group",
         )
+
+
+async def group_open_dms(
+    db: Database,
+    me_id: int,
+    group_id: int,
+) -> bool:
+    """
+    This function returns True if the current user has open DMs with the
+    specified group.
+    """
+    open_dms = (
+        await db.exec(
+            select(GroupRelationship.open_dms).where(
+                GroupRelationship.user_id == me_id
+                and GroupRelationship.group_id == group_id
+            )
+        )
+    ).first()
+    return open_dms == True
+
+
+async def assert_group_open_dms(
+    db: Database,
+    me_id: int,
+    group_id: int,
+) -> None:
+    """
+    This function raises an HTTPException if the current user does not have open
+    DMs with the specified group.
+    """
+    if not await group_open_dms(db, me_id, group_id):
+        raise HTTPException(
+            status_code=403,
+            detail="You do not have open DMs with this group",
+        )
