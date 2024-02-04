@@ -150,7 +150,7 @@ async def update_user(
 
     new_photos = req.photo_hashes.copy()
     old_photos = (
-        await db.exec(select(UserPhotos).where(UserPhotos.user_id == me_id))
+        await db.exec(select(UserPhoto).where(UserPhoto.user_id == me_id))
     ).all()
 
     for photo in old_photos:
@@ -163,7 +163,7 @@ async def update_user(
 
     # Add the new photos.
     for photo in new_photos:
-        db.add(UserPhotos(user_id=me_id, photo_hash=photo))
+        db.add(UserPhoto(user_id=me_id, photo_hash=photo))
 
     db.add(user)
     db.add(password)

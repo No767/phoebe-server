@@ -9,6 +9,7 @@ from api.me import RegisterRequest, register
 from api.groups import CreateGroupRequest, create_group
 from utils.assetutil import hash_bytes
 from sqlmodel import select
+from urllib.parse import urlencode
 import aiohttp
 import random
 import uvloop
@@ -21,6 +22,9 @@ P_USER_WITH_GROUPS = 0.5
 P_USER_WITH_AVATAR = 0.5
 P_GROUP_WITH_HOUSE = 0.5
 
+N_CATS_SQUARE = 50
+N_CATS = 100
+
 
 @dataclass
 class CatAsset:
@@ -29,7 +33,8 @@ class CatAsset:
 
 
 fake = Faker()
-fake_cats: list[CatAsset] = []  # list of URLs
+fake_cats: list[CatAsset] = []
+fake_cats_square: list[CatAsset] = []
 
 masculine_genders = [
     "male",
@@ -46,11 +51,14 @@ feminine_genders = [
 nonbinary_genders = [
     "non-binary",
     "agender",
+    "bigender",
+    "intersex",
+    "pangender",
 ]
 
 misc_genders = [
-    "androgynous",
-    "bigender",
+    "androgyne",
+    "altersex",
     "genderfluid",
     "genderqueer",
     "other",
@@ -66,31 +74,35 @@ async def generate_one_user(i: int, db: Database):
     registration = random_registration()
     session = await register(registration, db)
     user_id = session.user_id
+    assert user_id is not None
 
     print(f"Generated user with {registration.email=} and {registration.password=}")
 
     if roll(P_USER_WITH_AVATAR):
-        cat_asset = random.choice(fake_cats)
-        hash = hash_bytes(cat_asset.data)
-
-        asset = (await db.exec(select(Asset.hash).where(Asset.hash == hash))).first()
-        if asset is None:
-            asset = Asset(
-                hash=hash_bytes(cat_asset.data),
-                data=cat_asset.data,
-                content_type=cat_asset.content_type,
-                alt="cat cat kitty cat",
-            )
-            db.add(asset)
-
+        cat_asset = random.choice(fake_cats_square)
+        hash = await ensure_asset(cat_asset.data, cat_asset.content_type, db)
         user = (await db.exec(select(User).where(User.id == user_id))).one()
         user.avatar_hash = hash
         db.add(user)
-
         await db.commit()
+        print(f"Generated avatar for above user")
+
+    photo_hashes: set[str] = set()
+    n_photos_wanted = random.randint(0, 11)
+    while len(photo_hashes) < n_photos_wanted:
+        cat_asset = random.choice(fake_cats)
+        photo_hash = await ensure_asset(cat_asset.data, cat_asset.content_type, db)
+        if photo_hash in photo_hashes:
+            continue
+        photo = UserPhoto(user_id=user_id, photo_hash=photo_hash)
+        photo_hashes.add(photo_hash)
+        db.add(photo)
+    await db.commit()
+    print(f"Generated {len(photo_hashes)} photo roll for above user")
 
     if roll(P_USER_WITH_GROUPS):
         await create_group(random_group(), db=db, me_id=user_id)
+        print(f"Generated group for above user")
 
 
 def random_group() -> CreateGroupRequest:
@@ -146,14 +158,14 @@ def random_registration() -> RegisterRequest:
 
 
 async def generate():
-
     await database.init_db()
 
     async with aiohttp.ClientSession() as http:
-        CATS_URL = f"https://cataas.com/api/cats?size=square&limit={N_USERS}"
-        async with http.get(CATS_URL) as resp:
-            cats = await resp.json()
-            cats = [cat["_id"] for cat in cats]
+        cats_square = await list_cat_ids(http, {"size": "square"}, N_CATS_SQUARE)
+        print(f"Got {len(cats_square)} square cats")
+
+        cats = await list_cat_ids(http, {}, N_CATS)
+        print(f"Got {len(cats)} cats")
 
         async def cat_to_asset(id: str) -> CatAsset:
             async with http.get(f"https://cataas.com/cat/{id}") as resp:
@@ -161,12 +173,48 @@ async def generate():
                 content_type = resp.headers["Content-Type"]
                 return CatAsset(data, content_type)
 
+        async def cats_to_assets(ids: list[str]) -> list[CatAsset]:
+            print(f"Downloading {len(ids)} cats")
+            return await asyncio.gather(*[cat_to_asset(id) for id in ids])
+
+        global fake_cats_square
         global fake_cats
-        fake_cats = await asyncio.gather(*[cat_to_asset(cat) for cat in cats])
+
+        fake_cats_square = await cats_to_assets(cats_square)
+        fake_cats = await cats_to_assets(cats)
 
     async with database.get() as db:
         for i in range(N_USERS):
             await generate_one_user(i, db)
+
+
+async def list_cat_ids(http: aiohttp.ClientSession, query={}, limit=100) -> list[str]:
+    ids: list[str] = []
+    while len(ids) < limit:
+        q = urlencode(query)
+        u = f"https://cataas.com/api/cats?{q}"
+        async with http.get(u) as resp:
+            cats = await resp.json()
+            ids.extend([cat["_id"] for cat in cats])
+    ids = ids[:limit]
+    return ids
+
+
+async def ensure_asset(
+    data: bytes, content_type: str, db: Database, alt="cat cat kitty cat"
+) -> str:
+    hash = hash_bytes(data)
+    asset = await db.get(Asset, hash)
+    if asset is None:
+        asset = Asset(
+            hash=hash,
+            data=data,
+            content_type=content_type,
+            alt=alt,
+        )
+        db.add(asset)
+        await db.commit()
+    return hash
 
 
 def roll(p) -> bool:

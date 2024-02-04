@@ -27,6 +27,14 @@ def set_sqlite_path(path: str) -> None:
     sqlitePath = path
 
 
+echo = False
+
+
+def set_echo(e: bool) -> None:
+    global echo
+    echo = e
+
+
 def _pydantic_json_serializer(*args, **kwargs) -> str:
     """
     Encodes json in the same way that pydantic does.
@@ -45,7 +53,7 @@ async def init_db() -> None:
     global _engine
     _engine = sqlalchemy.ext.asyncio.create_async_engine(
         sqlite_url(),
-        echo=True,
+        echo=echo,
         json_serializer=_pydantic_json_serializer,
     )
 

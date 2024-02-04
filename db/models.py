@@ -109,7 +109,7 @@ class User(SQLModel, table=True):
         colors.assert_valid_color(color)
 
 
-class UserPhotos(SQLModel, table=True):
+class UserPhoto(SQLModel, table=True):
     user_id: Optional[int] = Field(foreign_key="user.id", primary_key=True)
     photo_hash: Optional[str] = Field(
         default=None, foreign_key="asset.hash", primary_key=True

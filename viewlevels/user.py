@@ -56,7 +56,7 @@ def user_view(
     level: AccessLevel,
     user: User,
     group: Optional[Group],
-    photos: Sequence[UserPhotos],
+    photos: Sequence[UserPhoto],
 ) -> UserView:
     # Start out with the most privileged view, then drill down to the more
     # public views by excluding fields.
@@ -64,7 +64,7 @@ def user_view(
         **user.model_dump(),
         access_level=AccessLevel.LEVEL3,
         group=group,
-        photo_hashes=[photo.hash for photo in photos],
+        photo_hashes=[photo.photo_hash for photo in photos],  # type: ignore
     )
 
     if level <= AccessLevel.LEVEL2:
@@ -96,7 +96,7 @@ async def user_view_from_db(db: Database, me_id: int, user_id: int) -> "UserView
     user = await db.get_one(User, user_id)
     group = await db.get_one(Group, user.group_id) if user.group_id else None
     photos = (
-        await db.exec(select(UserPhotos).where(UserPhotos.user_id == user_id))
+        await db.exec(select(UserPhoto).where(UserPhoto.user_id == user_id))
     ).all()
 
     level = AccessLevel.PUBLIC
