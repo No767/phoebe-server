@@ -23,7 +23,7 @@
 				pkgs = nixpkgs.legacyPackages.${system};
 
 				poetryApplication = mkPoetryApplication {
-					projectDir = self;
+					projectDir = ./.;
 					overrides = defaultPoetryOverrides.extend (self: super: let
 						fixPoetryPackage = pkg: pkg.overridePythonAttrs (old: {
 							buildInputs = (old.buildInputs or [ ]) ++ (with super; [
